@@ -1,0 +1,14 @@
+= link_to "返回列表", "admin"
+
+h2 请确定是否正确
+
+= form_tag "post/import_commit" do
+  table
+    tr
+      - columns.each do |col|
+        th= human_columns[col]
+    - preview_users.each do |u|
+      tr
+        - columns.each do |col|
+          td= u[col]
+  = submit_tag "确定"

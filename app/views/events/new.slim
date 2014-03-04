@@ -1,0 +1,8 @@
+= form_tag "/events" do
+  = label_tag :title, "项目名称"
+  = text_field_tag :title
+  = label_tag :start_date, "开始日期"
+  = text_field_tag :start_date
+  = label_tag :finish_date, "结束日期"
+  = text_field_tag :finish_date
+  = submit_tag "创建"

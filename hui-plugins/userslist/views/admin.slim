@@ -1,0 +1,12 @@
+= link_to "导入csv", "import_select_file"
+br
+= link_to "清空", "post/clear", :method => :post
+
+table
+  tr
+    - columns.each do |col|
+      th= human_columns[col]
+  - users.each do |u|
+    tr
+      - columns.each do |col|
+        td= u[col]

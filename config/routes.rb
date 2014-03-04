@@ -1,4 +1,21 @@
 Hui::Application.routes.draw do
+  root 'events#index'
+
+  get '/sessions/new' => 'sessions#new'
+  post '/sessions' => 'sessions#create'
+  delete '/sessions' => 'sessions#destroy'
+
+  get '/events' => 'events#index'
+  get '/events/new' => 'events#new'
+  post '/events' => 'events#create'
+  get '/events/:id' => 'events#show'
+  get '/events/:id/plugin_select' => 'events#plugin_select'
+  post '/events/:id/plugin_change' => 'events#plugin_change'
+
+  get '/plugins/:event_id/:plugin_code_name/:plugin_action' => 'plugins#dispatch_get'
+  post '/plugins/:event_id/:plugin_code_name/post/:plugin_action' => 'plugins#dispatch_post'
+  get '/plugins/api/:event_id/:plugin_code_name/:plugin_action' => 'plugins_api#dispatch_get'
+  post '/plugins/api/:event_id/:plugin_code_name/post/:plugin_action' => 'plugins_api#dispatch_post'
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 

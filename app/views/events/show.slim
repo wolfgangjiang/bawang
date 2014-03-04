@@ -1,0 +1,14 @@
+p= link_to "返回列表", "/events"
+h2= @event["title"]
+p= "从 #{@event['start_date']} 到 #{@event['finish_date']}"
+p= "已激活插件："
+- if @event_plugins_is_empty then
+  p 无
+- else
+  table
+    - @event_plugins.each do |p|
+      tr
+        td= p.code_name
+        td= p.human_name
+        td= link_to "管理插件", "/plugins/#{@event['_id']}/#{p.code_name}/admin"
+p= link_to "增减插件", "/events/#{@event['_id']}/plugin_select"

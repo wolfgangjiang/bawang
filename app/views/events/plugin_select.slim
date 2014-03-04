@@ -1,0 +1,11 @@
+h2= "配置 #{@event['title']} 的插件"
+
+= form_tag "/events/#{@event['_id']}/plugin_change" do
+  table
+    - @all_plugins.each do |plugin|
+      tr
+        td= check_box_tag "plugin_code_names[]", plugin.code_name, @event_plugin_names.include?(plugin.code_name)
+        td= plugin.code_name + ":"
+        td= plugin.human_name
+  br
+  = submit_tag "提交"

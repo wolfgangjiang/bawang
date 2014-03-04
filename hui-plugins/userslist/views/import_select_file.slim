@@ -1,0 +1,6 @@
+= form_tag "post/import_upload_file", {:multipart => true}  do
+  = label_tag :file, "上传用户列表的csv文件："
+  br
+  = file_field_tag :file
+  br
+  = submit_tag "上传"

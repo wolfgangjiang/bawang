@@ -1,0 +1,9 @@
+= link_to "创建新项目", "/events/new"
+table
+  - @events.each do |e|
+    tr
+      td= e["title"]
+      td= e["creator"]
+      td= e["start_date"]
+      td= e["finish_date"]
+      td= link_to "管理", "/events/#{e["_id"]}"
