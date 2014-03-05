@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 module HuiPluginPool
-  class PushInsideApp < GenericHuiPlugin
+  class CommentInsideApp < GenericHuiPlugin
     def admin(params)
       messages = get_table("messages").find.to_a.reverse
       {:file => "views/admin.slim",
@@ -11,6 +12,7 @@ module HuiPluginPool
     def create(params)
       get_table("messages").insert(
         :text => params[:message],
+        :author_name => params[:author_name],
         :active => false,
         :create_at => Time.now)
       {:redirect_to => "admin"}
@@ -26,10 +28,23 @@ module HuiPluginPool
 
     def api_poll(params)
       data = get_table("messages").find(:active => true).map do |m|
-        {:text => m["text"], :create_at => m["create_at"]}
+        {:text => m["text"],
+          :author_name => m["author_name"],
+          :create_at => m["create_at"]}
       end
       {:json => data}
     end
+
+    def api_submit(params)
+      user = get_friend("userslist").get_user_by_id(params[:user_id])
+      author_name = if user then user["name"] else "<未知>" end
+
+      get_table("messages").insert(
+        :text => params[:message],
+        :author_name => author_name,
+        :active => false,
+        :create_at => Time.now)
+      {:json => {:ok => true}}
+    end
   end
 end
-

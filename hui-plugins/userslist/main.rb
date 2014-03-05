@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
 module HuiPluginPool
   class Userslist < GenericHuiPlugin
+    class AsFriend < self
+      def get_user_by_id(_id)
+        if _id.is_a? String then
+          begin
+            _id = BSON::ObjectId(_id)
+          rescue BSON::InvalidObjectId
+            _id = nil
+          end
+        end
+
+        get_table("users").find_one(:_id => _id)
+      end
+    end
+
     Columns = ["name", "national_id", "email", "mobile", "company", "city",]
     HumanColumns = {"reject" => "舍弃",
       "name" => "姓名",
@@ -60,7 +74,7 @@ module HuiPluginPool
       data = CSV.parse(csv_content)
       columns = params[:columns]
       data.each do |row|
-        document = {:password => "initial_password"}
+        document = {:password => params["initial_password"]}
         columns.zip(row).each do |col, value|
           document[col] = value unless col == "reject"
         end
@@ -88,6 +102,18 @@ module HuiPluginPool
       get_table("preview_users").remove
       p get_table("users").find.to_a
       {:redirect_to => "admin"}
+    end
+
+    def api_login(params)
+      p get_table("users").find.to_a
+      user = get_table("users").find_one(
+        params[:login_key_name] => params[:login_name],
+        :password => params[:password])
+      if user then
+        {:json => {:user_id => user["_id"].to_s}}
+      else
+        {:json => {:user_id => nil, :info => "login failed"}}
+      end
     end
   end
 end

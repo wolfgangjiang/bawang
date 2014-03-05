@@ -1,0 +1,13 @@
+doctype html
+html
+  head
+    title 会务平台
+    = stylesheet_link_tag    "application", media: "all", "data-turbolinks-track" => true
+    = javascript_include_tag "application", "data-turbolinks-track" => true
+    = csrf_meta_tags
+  body
+    = link_to("注销", "/sessions", :method => :delete)
+    span= " "
+    = link_to("返回项目首页", "/events/#{@event_id}")
+    br
+    = yield

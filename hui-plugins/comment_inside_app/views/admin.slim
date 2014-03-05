@@ -1,0 +1,26 @@
+h2 App内用户提交评论管理
+
+p= "轮询API: /plugins/api/#{event_id}/comment_inside_app/poll"
+p
+  = "提交API: /plugins/api/#{event_id}/comment_inside_app/post/submit"
+  br
+  | （参数：user_id、message，其中user_id用login api获取）
+
+= form_tag "post/create" do
+  = label_tag :message, "发送管理员消息："
+  = text_field_tag :message
+  = label_tag :author_name, "名义："
+  = text_field_tag :author_name, "会务小秘书"
+  = submit_tag "发送"
+
+table
+  - messages.each do |m|
+    tr
+      td= m["create_at"].getlocal
+      td= m["text"]
+      td= m["author_name"]
+      td= if m["active"] then "有效" else "隐藏" end
+      td
+        = form_tag "post/toggle" do
+          = hidden_field_tag "_id", m["_id"]
+          = submit_tag "切换状态"

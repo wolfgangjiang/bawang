@@ -10,6 +10,7 @@ p= "轮询API: /plugins/api/#{event_id}/push_inside_app/poll"
 table
   - messages.each do |m|
     tr
+      td= m["create_at"].getlocal
       td= m["text"]
       td= if m["active"] then "有效" else "隐藏" end
       td

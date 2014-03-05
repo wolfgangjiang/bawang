@@ -52,4 +52,20 @@ class EventsController < ApplicationController
 
     redirect_to "/events/#{params[:id]}"
   end
+
+  def clear
+    if Rails.env == "production" then
+      raise "clearing data is not allowed in production mode"
+    else
+      event = get_event_by_id(params[:id])
+      
+      if event then
+        HuiMain.plugin_data.remove(:event_id => event['_id'].to_s)
+      else
+        HuiMain.plugin_data.remove
+      end
+    end
+
+    redirect_to "/events/#{params[:id]}"
+  end
 end

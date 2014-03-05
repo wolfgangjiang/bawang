@@ -11,6 +11,7 @@ Hui::Application.routes.draw do
   get '/events/:id' => 'events#show'
   get '/events/:id/plugin_select' => 'events#plugin_select'
   post '/events/:id/plugin_change' => 'events#plugin_change'
+  delete '/events/:id' => 'events#clear'
 
   get '/plugins/:event_id/:plugin_code_name/:plugin_action' => 'plugins#dispatch_get'
   post '/plugins/:event_id/:plugin_code_name/post/:plugin_action' => 'plugins#dispatch_post'

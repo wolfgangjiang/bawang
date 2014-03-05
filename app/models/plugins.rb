@@ -1,11 +1,12 @@
 class Plugins
-  attr_reader :code_name, :human_name, :controller_class
+  attr_reader :code_name, :human_name, :controller_class, :as_friend_class
   PluginDirectory = File.join(Rails.root, "hui-plugins")
 
   def initialize(opt)
     @code_name = opt[:code_name]
     @human_name = opt[:human_name]
     @controller_class = opt[:controller_class]
+    @as_friend_class = opt[:as_friend_class]
   end
 
   def self.reload
@@ -18,10 +19,16 @@ class Plugins
       load File.join(p_dir, "main.rb")
       plugin_class_name = File.basename(p_dir).camelize
       plugin_class = HuiPluginPool.const_get(plugin_class_name)
+      as_friend_class = if plugin_class.const_defined?("AsFriend") then
+                          plugin_class.const_get("AsFriend")
+                        else
+                          nil
+                        end
       @@plugins << self.new(
         :code_name => File.basename(p_dir),
         :human_name => manifest["name"],
-        :controller_class => plugin_class)
+        :controller_class => plugin_class,
+        :as_friend_class => as_friend_class)
     end
   end
 

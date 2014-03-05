@@ -30,6 +30,7 @@ class PluginsController < ApplicationController
         "/plugins/#{params[:event_id]}/#{plugin_code_name}", resp[:redirect_to])
       redirect_to path # always get, no post
     else
+      @event_id = params[:event_id]
       render resp
     end
   end
@@ -43,6 +44,7 @@ class PluginsController < ApplicationController
       resp[:file] =
         File.join(Plugins::PluginDirectory, plugin_code_name, resp[:file])
     end
+    resp[:layout] ||= "plugin"
   end
 
   def auto_reload_when_dev
