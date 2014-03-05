@@ -1,6 +1,6 @@
 set :stage, :staging
 
-set :rails_env, "production"
+set :rails_env, "development"
 set :application, "hui_staging"
 set :branch, "development"
 set :user, "edoctor"
