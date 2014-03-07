@@ -1,0 +1,13 @@
+h2 新建用户
+
+p= link_to "返回项目用户列表", "admin"
+= form_tag "post/create" do
+  table
+    - columns.each do |col|
+      tr
+        td= human_columns[col]
+        td= text_field_tag col
+    tr
+      td= "密码"
+      td= text_field_tag :password
+  p= submit_tag "完成"

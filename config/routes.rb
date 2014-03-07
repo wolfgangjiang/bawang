@@ -13,6 +13,10 @@ Hui::Application.routes.draw do
   post '/events/:id/plugin_change' => 'events#plugin_change'
   delete '/events/:id' => 'events#clear'
 
+  get '/users' => 'users#index'
+  get '/users/:id/edit' => 'users#edit'
+  put '/users/:id' => 'users#update'
+
   get '/plugins/:event_id/:plugin_code_name/:plugin_action' => 'plugins#dispatch_get'
   post '/plugins/:event_id/:plugin_code_name/post/:plugin_action' => 'plugins#dispatch_post'
   get '/plugins/api/:event_id/:plugin_code_name/:plugin_action' => 'plugins_api#dispatch_get'

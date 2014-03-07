@@ -1,4 +1,7 @@
-= link_to "创建新项目", "/events/new"
+p 
+  = link_to "创建新项目", "/events/new"
+  = " "
+  = link_to "用户主表", "/users"
 table
   - @events.each do |e|
     tr

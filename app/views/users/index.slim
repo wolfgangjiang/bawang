@@ -1,0 +1,16 @@
+p= link_to "去项目列表", "/events"
+
+p= "当前用户数：#{@users_count}"
+table
+  tr
+    - @columns.each do |col|
+      th= @human_columns[col]
+  - @users.each do |u|
+    tr
+      - @columns.each do |col|
+        td= u[col]
+      td= link_to "编辑属性", "/users/#{u['_id']}/edit"
+      - if u['hui_sync_time'] then
+        td= "（最近一次在 #{u['hui_sync_time'].getlocal} 从 #{u['hui_sync_source']} 同步）"
+      - else
+        td

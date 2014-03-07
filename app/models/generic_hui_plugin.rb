@@ -12,4 +12,13 @@ class GenericHuiPlugin
     Plugins.get(friend_plugin_code_name).
       as_friend_class.new(@event_id, friend_plugin_code_name)
   end
+
+  def get_event_title
+    event = HuiMain.events.find_one({:_id => BSON::ObjectId(@event_id)})
+    if event then
+      event["title"]
+    else
+      nil
+    end
+  end
 end

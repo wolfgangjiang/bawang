@@ -1,0 +1,11 @@
+h2 修改用户属性
+
+p= link_to "返回用户列表", "/users"
+= form_tag "/users/#{@user['_id']}", :method => :put do
+  p= hidden_field_tag :user_id, @user['_id']
+  table
+    - @columns.each do |col|
+      tr
+        td= @human_columns[col]
+        td= text_field_tag col, @user[col]
+  p= submit_tag "完成"
