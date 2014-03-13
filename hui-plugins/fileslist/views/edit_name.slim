@@ -1,0 +1,8 @@
+p= "原文件名：#{f['name']}"
+
+= form_tag "post/update_name" do
+  = label_tag "new_name", "改为："
+  = text_field_tag "new_name", f['name']
+  = hidden_field_tag "current_folder_id", current_folder_id
+  = hidden_field_tag "f_id", f["_id"]
+  = submit_tag "提交修改"

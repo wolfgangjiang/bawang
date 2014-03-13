@@ -1,0 +1,12 @@
+= link_to "文件列表", "admin?current_folder_id=#{current_folder_id}"
+p= "当前目录：#{current_folder['name']}"
+
+= form_tag "post/create_file", {:multipart => true} do
+  = label_tag "name", "文件名："
+  = text_field_tag "name"
+  br
+  = label_tag "file", "上传文件（不能为空，为空时会报错）："
+  = file_field_tag "file"
+  br
+  = hidden_field_tag :current_folder_id, current_folder_id
+  = submit_tag "提交"

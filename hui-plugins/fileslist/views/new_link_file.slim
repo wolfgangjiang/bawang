@@ -1,0 +1,13 @@
+= link_to "文件列表", "admin?current_folder_id=#{current_folder_id}"
+
+p= "当前目录：#{current_folder['name']}"
+
+= form_tag "post/create_link_file" do
+  = label_tag "name", "文件名："
+  = text_field_tag "name"
+  br
+  = label_tag "link", "文件的外部链接（不能为空，为空时会报错）："
+  = text_field_tag "link"
+  br
+  = hidden_field_tag :current_folder_id, current_folder_id
+  = submit_tag "提交"

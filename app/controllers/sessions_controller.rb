@@ -8,7 +8,9 @@ class SessionsController < ApplicationController
     if params[:email] == "admin@edoctor.cn" and
         params[:password] == "Sh123456" then
       session[:current_user_id] = "admin"
+      session[:current_user_name] = "admin@edoctor.cn"
     end
+    HuiLogger.log(nil, session[:current_user_name], nil, "general_admin", "login", {})
     redirect_to "/"
   end
 

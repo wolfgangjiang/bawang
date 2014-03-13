@@ -18,3 +18,4 @@
 /.ruby-version
 /.ruby-gemset
 /config/db_config.yml
+/public/system

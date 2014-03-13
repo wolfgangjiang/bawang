@@ -5,6 +5,7 @@ class HuiMain
   Events = Db.collection("events")
   PluginData = Db.collection("plugin_data")
   AsyncTasks = Db.collection("async_tasks")
+  Logs = Db.collection("logs")
 
   UserColumns = ["name", "national_id", "mobile", "email", "city", "company",
     "department", "position"]
@@ -34,5 +35,9 @@ class HuiMain
 
   def self.async_tasks
     AsyncTasks
+  end
+
+  def self.logs
+    Logs
   end
 end

@@ -7,10 +7,12 @@ class EventsController < ApplicationController
   end
 
   def create
+    mandatory_plugins = Plugins.list.select {|p| p.mandatory}.map(&:code_name)
     HuiMain.events.insert(
       :title => params[:title],
       :start_date => params[:start_date],
-      :finish_date => params[:finish_date])
+      :finish_date => params[:finish_date],
+      :plugins => mandatory_plugins)
     redirect_to :action => :index
   end
 
@@ -43,7 +45,9 @@ class EventsController < ApplicationController
     event = get_event_by_id(params[:id])
 
     if event then
-      plugin_code_names = params[:plugin_code_names] || []
+      selected_plugin_code_names = params[:plugin_code_names] || []
+      mandatory_plugins = Plugins.list.select {|p| p.mandatory}.map(&:code_name)
+      plugin_code_names = mandatory_plugins + selected_plugin_code_names
       HuiMain.events.update({:_id => event["_id"]},
         {"$set" => {"plugins" => plugin_code_names}})
     else
@@ -55,7 +59,7 @@ class EventsController < ApplicationController
 
   def clear
     if Rails.env == "production" then
-      raise "clearing data is not allowed in production mode"
+      render :text => "clearing data is not allowed in production mode"
     else
       event = get_event_by_id(params[:id])
       
@@ -64,8 +68,7 @@ class EventsController < ApplicationController
       else
         HuiMain.plugin_data.remove
       end
+      redirect_to "/events/#{params[:id]}"
     end
-
-    redirect_to "/events/#{params[:id]}"
   end
 end

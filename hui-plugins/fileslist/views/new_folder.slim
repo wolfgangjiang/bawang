@@ -1,0 +1,9 @@
+= link_to "文件列表", "admin?current_folder_id=#{current_folder_id}"
+p= "当前目录：#{current_folder['name']}"
+
+= form_tag "post/create_folder" do
+  = label_tag "name", "新目录名："
+  = text_field_tag "name"
+  = hidden_field_tag :current_folder_id, current_folder_id
+  = submit_tag "在当前目录下创建新目录"
+

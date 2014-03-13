@@ -1,0 +1,27 @@
+h2 文件管理
+
+p
+  = "当前目录：#{current_folder['name']}"
+  br
+  - if current_folder["parent_id"] then
+    = link_to "去上级目录", "thumbs?current_folder_id=#{current_folder['parent_id']}"
+= link_to "列表模式", "admin?current_folder_id=#{current_folder_id}"
+
+table
+  - (children.size.div(5) + 1).times do |row|
+    tr
+      - 5.times do |col|
+        - f = children[row * 5 + col]
+        - if f then
+          td
+            - if [".bmp", ".jpg", ".jpeg", ".gif", ".png"].include?(File.extname(f["physical_link"] || "")) then
+              a href=f["physical_link"]
+                = image_tag children[row * 5 + col]["physical_link"], :width => 200
+            - elsif f["is_folder"] then
+              = link_to "[#{f['name']}]", "thumbs?current_folder_id=#{f['_id']}"
+              br
+              = "is a folder"
+            - else
+              = "[#{f['name']}]"
+              br
+              = "not an image"

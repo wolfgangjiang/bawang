@@ -1,12 +1,12 @@
 class Plugins
-  attr_reader :code_name, :human_name, :controller_class, :as_friend_class
+  attr_reader :code_name, :human_name, :mandatory
+  attr_reader :controller_class, :as_friend_class
   PluginDirectory = File.join(Rails.root, "hui-plugins")
 
   def initialize(opt)
-    @code_name = opt[:code_name]
-    @human_name = opt[:human_name]
-    @controller_class = opt[:controller_class]
-    @as_friend_class = opt[:as_friend_class]
+    opt.each do |name, value|
+      self.instance_variable_set("@#{name}", value)
+    end
   end
 
   def self.reload
@@ -27,6 +27,7 @@ class Plugins
       @@plugins << self.new(
         :code_name => File.basename(p_dir),
         :human_name => manifest["name"],
+        :mandatory => manifest["mandatory"],
         :controller_class => plugin_class,
         :as_friend_class => as_friend_class)
     end

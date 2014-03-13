@@ -7,9 +7,14 @@ class PluginsController < ApplicationController
 
   def dispatch_post
     handle
+    clean_params = params.except(:controller, :action, 
+      :event_id, :plugin_code_name, :plugin_action)
+    HuiLogger.log(params[:user_id], get_user_name(params[:user_id]),
+      params[:event_id], params[:plugin_code_name],
+      params[:plugin_action], clean_params)
   end
 
-  private
+  protected
 
   def handle
     event = get_event_by_id(params[:event_id])
@@ -55,5 +60,27 @@ class PluginsController < ApplicationController
 
   def get_plugin_action_method(plugin_action_name)
     plugin_action_name
+  end
+
+  def is_api
+    false
+  end
+
+  # maybe admin user from session or client-api user from params[:user_id]
+  def get_user_name(user_id)
+    if self.is_api then
+      user = begin 
+               HuiMain.plugin_data.find_one("_id" => BSON::ObjectId(user_id))
+             rescue BSON::InvalidObjectId
+               nil
+             end
+      if user then 
+        user["name"]
+      else
+        nil
+      end
+    else # not api
+      session[:current_user_name]
+    end
   end
 end
