@@ -1,6 +1,7 @@
 p= link_to "返回列表", "/events"
 h2= @event["title"]
-/ p= "从 #{@event['start_date']} 到 #{@event['finish_date']}"
+p= "创建于#{@event['create_at'].try(:getlocal)}"
+p= @event["desc"]
 - if Rails.env != "production" then
   = link_to "清空这个项目的所有数据（调试用，在production模式下无效）", "/events/#{@event['_id']}", :method => :delete
 p= "已激活插件："

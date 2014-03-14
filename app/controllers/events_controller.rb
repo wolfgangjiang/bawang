@@ -10,8 +10,9 @@ class EventsController < ApplicationController
     mandatory_plugins = Plugins.list.select {|p| p.mandatory}.map(&:code_name)
     HuiMain.events.insert(
       :title => params[:title],
-      :start_date => params[:start_date],
-      :finish_date => params[:finish_date],
+      :create_at => Time.now,
+      :creator => session[:current_user_name],
+      :desc => params[:desc],
       :plugins => mandatory_plugins)
     redirect_to :action => :index
   end

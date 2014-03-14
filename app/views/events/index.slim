@@ -7,6 +7,5 @@ table
     tr
       td= e["title"]
       td= e["creator"]
-      td= e["start_date"]
-      td= e["finish_date"]
+      td= e["create_at"].try(:getlocal)
       td= link_to "管理", "/events/#{e["_id"]}"
