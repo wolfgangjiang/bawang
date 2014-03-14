@@ -5,12 +5,21 @@ class SessionsController < ApplicationController
   end
 
   def create
-    if params[:email] == "admin@edoctor.cn" and
-        params[:password] == "Sh123456" then
-      session[:current_user_id] = "admin"
-      session[:current_user_name] = "admin@edoctor.cn"
+    ldap_name = params[:email].match(/(.*)@edoctor\.cn/)[1] rescue nil
+    if ldap_name then
+      user_info = LDAP.auth(ldap_name, params[:password])
+      if user_info then
+        session[:current_user_id] = ldap_name
+        session[:current_user_name] = user_info[:display_name]
+        HuiLogger.log(session[:current_user_id], session[:current_user_name],
+          nil, "general_admin", "admin_login", {})
+      else
+        flash[:message] = "login failed"
+      end
+    else
+      flash[:message] = "login failed"
     end
-    HuiLogger.log(nil, session[:current_user_name], nil, "general_admin", "login", {})
+
     redirect_to "/"
   end
 

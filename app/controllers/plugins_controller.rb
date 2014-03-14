@@ -8,7 +8,8 @@ class PluginsController < ApplicationController
   def dispatch_post
     handle
     clean_params = params.except(:controller, :action, 
-      :event_id, :plugin_code_name, :plugin_action)
+      :event_id, :plugin_code_name, :plugin_action,
+      :utf8, :authenticity_token)
     HuiLogger.log(params[:user_id], get_user_name(params[:user_id]),
       params[:event_id], params[:plugin_code_name],
       params[:plugin_action], clean_params)

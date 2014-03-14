@@ -7,7 +7,7 @@ class HuiLogger
         :user_name => user_name,
         :event_id => event_id,
         :plugin_code_name => plugin_code_name,
-        :acion => action,
+        :action => action,
         :args => args)
     rescue
       HuiMain.logs.insert(
@@ -16,7 +16,7 @@ class HuiLogger
         :user_name => user_name,
         :event_id => event_id,
         :plugin_code_name => plugin_code_name,
-        :acion => action,
+        :action => action,
         :args => JSON.generate(args)) # <== maybe args key containing "." caused error
     end  
   end

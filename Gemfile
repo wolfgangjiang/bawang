@@ -33,6 +33,7 @@ end
 gem 'mongo'
 gem 'bson_ext'
 gem 'slim-rails'
+gem 'net-ldap'
 
 group :development do
   gem 'capistrano-rails', '~> 1.0.0'

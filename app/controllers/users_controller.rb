@@ -29,7 +29,8 @@ class UsersController < ApplicationController
 
     data = params.slice(*HuiMain::UserColumns)
     HuiMain.users.update({:_id => user["_id"]}, {"$set" => data})
-    HuiLogger.log(nil, session[:current_user_name], nil, "general_admin", "edit_user", data) 
+    HuiLogger.log(session[:current_user_id], session[:current_user_name],
+      nil, "general_admin", "edit_user", data) 
     redirect_to "/users"
   end
 end
