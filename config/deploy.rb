@@ -28,7 +28,7 @@ set :rvm_ruby_version, "2.0.0"
 # set :pty, true
 
 # Default value for :linked_files is []
-set :linked_files, %w{config/db_config.yml .ruby-version .ruby-gemset}
+set :linked_files, %w{.ruby-version .ruby-gemset config/db_config.yml config/ldap.yml}
 
 # Default value for linked_dirs is []
 set :linked_dirs, %w{bin log tmp/pids tmp/cache tmp/sockets public/system}
