@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+require 'csv'
+
 module HuiPluginPool
   class Userslist < GenericHuiPlugin
     class AsFriend < self
@@ -59,7 +61,6 @@ module HuiPluginPool
     end
 
     def import_arrange_columns(params)
-      require 'csv'
       csv_content = read_temp("csv_content")
       data = CSV.parse(csv_content)
       {:file => "views/import_arrange_columns.slim",
