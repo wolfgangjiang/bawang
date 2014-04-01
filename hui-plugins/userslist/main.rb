@@ -24,10 +24,10 @@ module HuiPluginPool
       users = get_table("users").find.sort({"_id" => 1})
       users_count = get_table("users").find.count
 
-      usersync_task_id = read_temp("usersync_task_id")
+      usersync_task_id = read_var("usersync_task_id")
       if usersync_task_id then
         usersync_task_status = AsyncTask.get_status(usersync_task_id)
-        clear_temp("usersync_task_id") if usersync_task_status["finished"]
+        clear_var("usersync_task_id") if usersync_task_status["finished"]
       else
         usersync_task_status = nil
       end
@@ -56,12 +56,12 @@ module HuiPluginPool
       # overwritten
       csv_content = File.read(params[:file].tempfile)
 
-      write_temp("csv_content", csv_content)
+      write_var("csv_content", csv_content)
       {:redirect_to => "import_arrange_columns"}
     end
 
     def import_arrange_columns(params)
-      csv_content = read_temp("csv_content")
+      csv_content = read_var("csv_content")
       data = CSV.parse(csv_content)
       {:file => "views/import_arrange_columns.slim",
         :locals => {
@@ -71,7 +71,7 @@ module HuiPluginPool
     end
 
     def import_determine_columns(params)
-      csv_content = read_temp("csv_content")
+      csv_content = read_var("csv_content")
       get_table("preview_users").remove
       data = CSV.parse(csv_content)
       columns = params[:columns]
@@ -99,10 +99,8 @@ module HuiPluginPool
       get_table("preview_users").find.each do |u|
         u.delete("_id")
         get_table("users").insert(u)
-        p get_table("users").find.to_a
       end
       get_table("preview_users").remove
-      p get_table("users").find.to_a
       {:redirect_to => "admin"}
     end
 
@@ -148,9 +146,6 @@ module HuiPluginPool
       raise "no such user" unless user
       raise "password should not be empty" if params[:password].blank?
 
-      # get_table("users").update({:_id => user["_id"]},
-      #   {"$set" => {:password => params[:password]}})
-      # sync_password_to_main_user_table(user, params[:password])
       generic_update_password(user, params[:password])
       {:redirect_to => "admin"}
     end
@@ -180,7 +175,7 @@ module HuiPluginPool
         task.finish_with(nil)
       end
 
-      write_temp("usersync_task_id", task_id)
+      write_var("usersync_task_id", task_id)
       {:redirect_to => "admin"}
     end
 
@@ -324,29 +319,6 @@ module HuiPluginPool
         # it is not a sync_able_pivot if user[pivot] is nil or missing or ""
         (not user[pivot].blank?) and HuiMain.users.find_one(pivot => user[pivot])
       end
-    end
-
-    def write_temp(name, value)
-      name_s = name.to_s
-      get_table("temp").update(
-        {:name => name_s},
-        {"$set" => {name_s => value}},
-        {:upsert => true})
-    end
-
-    def read_temp(name)
-      name_s = name.to_s
-      rec = get_table("temp").find_one(:name => name_s)
-      if rec then
-        rec[name_s]
-      else
-        nil
-      end
-    end
-
-    def clear_temp(name)
-      name_s = name.to_s
-      get_table("temp").remove(:name => name_s)
     end
 
     def generic_update(params)

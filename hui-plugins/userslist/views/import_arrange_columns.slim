@@ -7,7 +7,7 @@ h2 请确定每一列的含义，并设定统一初始密码
     span= label_tag :initial_password, "统一初始密码："
     span= text_field_tag :initial_password
   table
-    tr
+    tr.column-names
       - width.times do |i|
         td= select_tag "columns[]", options_for_select(column_options)
     - data.each do |row|

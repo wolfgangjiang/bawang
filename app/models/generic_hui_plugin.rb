@@ -21,4 +21,27 @@ class GenericHuiPlugin
       nil
     end
   end
+
+  def write_var(name, value)
+    name_s = name.to_s
+    get_table("var").update(
+      {:name => name_s},
+      {"$set" => {name_s => value}},
+      {:upsert => true})
+  end
+
+  def read_var(name)
+    name_s = name.to_s
+    rec = get_table("var").find_one(:name => name_s)
+    if rec then
+      rec[name_s]
+    else
+      nil
+    end
+  end
+
+  def clear_var(name)
+    name_s = name.to_s
+    get_table("var").remove(:name => name_s)
+  end
 end
