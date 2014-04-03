@@ -177,9 +177,9 @@ module HuiPluginPool
       end
     end
 
-    # 接受三个参数：folder_id、name和file。其中folder_id是要上传到的目
-    # 录的id，name表示在系统中所取的文件名，file则应该是一段multipart的
-    # 数据，表示文件内容。成功上传时返回{"ok": true}。
+    # 接受四个参数：folder_id、user_id、name和file。其中folder_id是要上
+    # 传到的目录的id，name表示在系统中所取的文件名，file则应该是一段
+    # multipart的数据，表示文件内容。成功上传时返回{"ok": true}。
     def api_upload(params)
       begin
         user = get_friend("userslist").get_user_by_id(params[:user_id])

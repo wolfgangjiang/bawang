@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'fileutils'
 
-describe "userslist" do
+describe "fileslist" do
   include BasicHelpers
 
   before(:all) do

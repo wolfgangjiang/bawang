@@ -28,7 +28,20 @@ module BasicHelpers
       click
   end
 
+  def within_row(row_feature, &block)
+    within(:xpath, "//tr[contains(.,'#{row_feature}')]", &block)
+  end
+
   def get_test_file(filename)
     File.join(Rails.root, "spec/test_data", filename)    
+  end
+
+  def add_plugin(plugin_code_name)
+    click_on "增减插件"
+    within_row(plugin_code_name) do
+      check("plugin_code_names[]")
+    end
+    click_on "提交"
+    page.should have_content plugin_code_name
   end
 end

@@ -40,7 +40,7 @@ class PluginsController < ApplicationController
       render resp
     end
   end
-  
+
   def process_response(resp, plugin_code_name)
     unless resp.is_a? Hash and resp.keys.map(&:to_sym).any? {|k| [:file, :json, :redirect_to, :data, :xml, :text].include? k}
       raise "plugin action should return a hash with exactly one key of :file, :json, :redirect_to, :data, :xml or :text"
