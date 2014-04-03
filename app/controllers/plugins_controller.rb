@@ -2,11 +2,11 @@ class PluginsController < ApplicationController
   before_filter :auto_reload_when_dev
 
   def dispatch_get
-    handle
+    handle("get")
   end
 
   def dispatch_post
-    handle
+    handle("post")
     clean_params = params.except(:controller, :action, 
       :event_id, :plugin_code_name, :plugin_action,
       :utf8, :authenticity_token)
@@ -17,7 +17,7 @@ class PluginsController < ApplicationController
 
   protected
 
-  def handle
+  def handle(http_method)
     event = get_event_by_id(params[:event_id])
     return render_404 unless event
 
@@ -27,9 +27,12 @@ class PluginsController < ApplicationController
 
     return render_404 unless event["plugins"].include? plugin_code_name
 
-    resp = plugin.perform(
-      get_plugin_action_method(params[:plugin_action]), params)
-    process_response(resp, plugin_code_name)
+    begin
+      resp = plugin.perform(params[:plugin_action], http_method, is_api, params)
+      process_response(resp, plugin_code_name)
+    rescue GenericHuiPlugin::NoSuchActionError
+      render_404
+    end
 
     if resp.has_key?(:redirect_to) then
       path = File.join(
@@ -57,10 +60,6 @@ class PluginsController < ApplicationController
     if Rails.env == "development" then
       Plugins.reload
     end
-  end
-
-  def get_plugin_action_method(plugin_action_name)
-    plugin_action_name
   end
 
   def is_api

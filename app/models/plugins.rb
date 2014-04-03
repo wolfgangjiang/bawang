@@ -41,7 +41,8 @@ class Plugins
     @@plugins
   end
 
-  def perform(name, params)
+  def perform(name, http_method, is_api, params)
+    self.controller_class.verify(name, http_method, is_api)
     self.controller_class.
       new(params[:event_id], params[:plugin_code_name]).
       send(name, params)

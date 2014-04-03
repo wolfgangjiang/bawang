@@ -1,4 +1,6 @@
 class GenericHuiPlugin
+  class NoSuchActionError < RuntimeError; end
+
   def initialize(event_id, plugin_code_name)
     @plugin_code_name = plugin_code_name
     @event_id = event_id
@@ -43,5 +45,32 @@ class GenericHuiPlugin
   def clear_var(name)
     name_s = name.to_s
     get_table("var").remove(:name => name_s)
+  end
+
+  def self.action(name, http_method, opt={}, &block)
+    @@actions ||= {}.with_indifferent_access
+    opt = opt.with_indifferent_access
+
+    method_key = get_method_key(http_method.to_s, opt[:api])
+
+    @@actions[method_key] ||= []
+    @@actions[method_key] << name.to_s
+    define_method(name, &block)
+  end
+
+  def self.get_method_key(http_method, is_api)
+    if http_method == "get" and is_api then "get_api"
+    elsif http_method == "get" and not is_api then "get_page"
+    elsif http_method == "post" and is_api then "post_api"
+    elsif http_method == "post" and not is_api then "post_page"
+    else raise "unsupported http method #{http_method}"
+    end    
+  end
+
+  def self.verify(name, http_method, is_api)
+    method_key = get_method_key(http_method.to_s, is_api)
+    raise NoSuchActionError.new(name) unless
+      (@@actions[method_key] and
+      @@actions[method_key].include?(name.to_s))
   end
 end

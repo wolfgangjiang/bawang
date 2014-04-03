@@ -1,6 +1,6 @@
 module HuiPluginPool
   class PushInsideApp < GenericHuiPlugin
-    def admin(params)
+    action :admin, :get do |params|
       messages = get_table("messages").find.to_a.reverse
       {:file => "views/admin.slim",
         :locals => {
@@ -8,7 +8,7 @@ module HuiPluginPool
           :event_id => params[:event_id]}}
     end
 
-    def create(params)
+    action :create, :post do |params|
       get_table("messages").insert(
         :text => params[:message],
         :active => false,
@@ -16,7 +16,7 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    def toggle(params)
+    action :toggle, :post do |params|
       object_id = BSON::ObjectId(params[:_id]) 
       message = get_table("messages").find_one("_id" => object_id)
       get_table("messages").update({"_id" => object_id},
@@ -24,7 +24,7 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    def api_poll(params)
+    action :poll, :get, :api => true do |params|
       data = get_table("messages").find(:active => true).map do |m|
         {:text => m["text"], :create_at => m["create_at"]}
       end
