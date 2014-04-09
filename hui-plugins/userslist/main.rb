@@ -20,7 +20,7 @@ module HuiPluginPool
     SyncPivots = ["national_id", "mobile", "email"]
     class PasswordBlankError < RuntimeError; end
 
-    def admin(params)
+    action :admin, :get do |params|
       users = get_table("users").find.sort({"_id" => 1})
       users_count = get_table("users").find.count
 
@@ -41,16 +41,16 @@ module HuiPluginPool
           :usersync_task_status => usersync_task_status}}
     end
 
-    def clear(params)
+    action :clear, :post do |params|
       get_table("users").remove
       {:redirect_to => "admin"}
     end
 
-    def import_select_file(params)
+    action :import_select_file, :get do |params|
       {:file => "views/import_select_file.slim"}
     end
 
-    def import_upload_file(params)
+    action :import_upload_file, :post do |params|
       # we only use one single temp for one event, if multiple uploads
       # occurs before old upload is commited, old upload is
       # overwritten
@@ -59,8 +59,8 @@ module HuiPluginPool
       write_var("csv_content", csv_content)
       {:redirect_to => "import_arrange_columns"}
     end
-
-    def import_arrange_columns(params)
+    
+    action :import_arrange_columns, :get do |params|
       csv_content = read_var("csv_content")
       data = CSV.parse(csv_content)
       {:file => "views/import_arrange_columns.slim",
@@ -70,7 +70,7 @@ module HuiPluginPool
           :column_options => HuiMain::HumanUserColumns.invert}}
     end
 
-    def import_determine_columns(params)
+    action :import_determine_columns, :post do |params|
       csv_content = read_var("csv_content")
       get_table("preview_users").remove
       data = CSV.parse(csv_content)
@@ -85,7 +85,7 @@ module HuiPluginPool
       {:redirect_to => "import_preview"}
     end
 
-    def import_preview(params)
+    action :import_preview, :get do |params|
       preview_users = get_table("preview_users").find
       {:file => "views/import_preview.slim",
         :locals => {
@@ -95,7 +95,7 @@ module HuiPluginPool
         }}
     end
 
-    def import_commit(params)
+    action :import_commit, :post do |params|
       get_table("preview_users").find.each do |u|
         u.delete("_id")
         get_table("users").insert(u)
@@ -104,7 +104,7 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    def sync_one(params)
+    action :sync_one, :post do |params|
       user = get_friend("userslist").get_user_by_id(params[:user_id])
 
       if user then
@@ -114,52 +114,7 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    def edit(params)
-      user = get_friend("userslist").get_user_by_id(params[:user_id])
-      raise "no such user" unless user
-
-      {:file => "views/edit.slim",
-        :locals => {
-          :user => user,
-          :columns => HuiMain::UserColumns,
-          :human_columns => HuiMain::HumanUserColumns}}            
-    end
-
-    def update(params)
-      generic_update(params)
-      {:redirect_to => "admin"}
-    end
-
-    def edit_password(params)
-      user = get_friend("userslist").get_user_by_id(params[:user_id])
-      raise "no such user" unless user
-
-      {:file => "views/edit_password.slim",
-        :locals => {
-          :user => user,
-          :columns => HuiMain::UserColumns,
-          :human_columns => HuiMain::HumanUserColumns}}
-    end
-
-    def update_password(params)
-      user = get_friend("userslist").get_user_by_id(params[:user_id])
-      raise "no such user" unless user
-      raise "password should not be empty" if params[:password].blank?
-
-      generic_update_password(user, params[:password])
-      {:redirect_to => "admin"}
-    end
-
-    def destroy(params)
-      user = get_friend("userslist").get_user_by_id(params[:user_id])
-
-      if user then
-        get_table("users").remove({:_id => user["_id"]})
-      end # else do not raise "no such user" error
-      {:redirect_to => "admin"}
-    end
-
-    def sync_all(params)
+    action :sync_all, :post do |params|
       users_count = get_table("users").find.count
       users = get_table("users").find.sort({"_id" => 1})
       event_title = get_event_title
@@ -179,14 +134,59 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    def new(params)
+    action :edit, :get do |params|
+      user = get_friend("userslist").get_user_by_id(params[:user_id])
+      raise "no such user" unless user
+
+      {:file => "views/edit.slim",
+        :locals => {
+          :user => user,
+          :columns => HuiMain::UserColumns,
+          :human_columns => HuiMain::HumanUserColumns}}            
+    end
+
+    action :update, :post do |params|
+      generic_update(params)
+      {:redirect_to => "admin"}
+    end
+
+    action :edit_password, :get do |params|
+      user = get_friend("userslist").get_user_by_id(params[:user_id])
+      raise "no such user" unless user
+
+      {:file => "views/edit_password.slim",
+        :locals => {
+          :user => user,
+          :columns => HuiMain::UserColumns,
+          :human_columns => HuiMain::HumanUserColumns}}
+    end
+
+    action :update_password, :post do |params|
+      user = get_friend("userslist").get_user_by_id(params[:user_id])
+      raise "no such user" unless user
+      raise "password should not be empty" if params[:password].blank?
+
+      generic_update_password(user, params[:password])
+      {:redirect_to => "admin"}
+    end
+
+    action :destroy, :post do |params|
+      user = get_friend("userslist").get_user_by_id(params[:user_id])
+
+      if user then
+        get_table("users").remove({:_id => user["_id"]})
+      end # else do not raise "no such user" error
+      {:redirect_to => "admin"}
+    end
+
+    action :new, :get do |params|
       {:file => "views/new.slim",
         :locals => {
           :columns => HuiMain::UserColumns,
           :human_columns => HuiMain::HumanUserColumns}}            
     end
 
-    def create(params)
+    action :create, :post do |params|
       generic_create(params)
       {:redirect_to => "admin"}      
     end
@@ -195,7 +195,7 @@ module HuiPluginPool
     # "login_name":"13811110001", "password":"xxxx"}，共三个有效的key。
     # login_key_name可以是mobile、email或national_id。正确登录时返回
     # user_id。
-    def api_login(params)
+    action :login, :post, :api => true do |params|
       user = authenticate(
         params[:login_key_name], params[:login_name], params[:password])
       if user then
@@ -208,7 +208,7 @@ module HuiPluginPool
     # 修改用户属性，格式：{"user_id": "xxxx", "name": "xxx", ...}
     # 有效的key是user_id和UserColumns中的key，password字段会被无视。
     # update_password api才能修改密码。正常修改后会返回{ok:true}
-    def api_update(params)
+    action :update, :post, :api => true do |params|
       generic_update(params)
       {:json => {:ok => true}}
     end
@@ -216,7 +216,7 @@ module HuiPluginPool
     # 创建用户，格式：{"password": "xxx", "name": "xxx", ...} 有效的
     # key是password和UserColumns中的key。密码不能为null或空字符串，否则
     # 会报错。正常创建后会返回{ok:true, user_id:"xxxx"}
-    def api_create(params)
+    action :create, :post, :api => true do |params|
       begin
         user_id = generic_create(params)
         {:json => {:ok => true, :user_id => user_id.to_s}}
@@ -229,7 +229,7 @@ module HuiPluginPool
     # "new_password": "xxxx"}。共三个有效的key。old_password必须是当前
     # 有效的密码，new_password不能为null或空字符串，否则报错。正常修改
     # 后会返回{ok:true}
-    def api_update_password(params)
+    action :update_password, :post, :api => true do |params|
       user = get_friend("userslist").get_user_by_id(params[:user_id])
       raise "no such user" unless user
 

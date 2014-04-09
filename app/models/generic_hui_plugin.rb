@@ -51,14 +51,17 @@ class GenericHuiPlugin
     @@actions ||= {}.with_indifferent_access
     opt = opt.with_indifferent_access
 
-    method_key = get_method_key(http_method.to_s, opt[:api])
+    method_key = get_method_key(http_method, opt[:api])
 
     @@actions[method_key] ||= []
     @@actions[method_key] << name.to_s
-    define_method(name, &block)
+    method_name = "#{method_key}_#{name}"
+    define_method(method_name, &block)
   end
 
   def self.get_method_key(http_method, is_api)
+    http_method = http_method.to_s
+
     if http_method == "get" and is_api then "get_api"
     elsif http_method == "get" and not is_api then "get_page"
     elsif http_method == "post" and is_api then "post_api"
@@ -68,9 +71,15 @@ class GenericHuiPlugin
   end
 
   def self.verify(name, http_method, is_api)
-    method_key = get_method_key(http_method.to_s, is_api)
+    method_key = get_method_key(http_method, is_api)
     raise NoSuchActionError.new(name) unless
       (@@actions[method_key] and
       @@actions[method_key].include?(name.to_s))
+  end
+
+  def perform(name, http_method, is_api, params)
+    method_key = self.class.get_method_key(http_method, is_api)
+    method_name = "#{method_key}_#{name}"
+    self.send(method_name, params)
   end
 end
