@@ -7,7 +7,7 @@ module HuiPluginPool
     class NoUploadedFileError < RuntimeError; end
     class NoSuchFolderError < RuntimeError; end
 
-    def admin(params)
+    action :admin, :get do |params|
       if params[:current_folder_id] then
         current_folder_id = params[:current_folder_id] 
         current_folder = get_file_by_id(current_folder_id)
@@ -23,7 +23,7 @@ module HuiPluginPool
       end
     end
 
-    def thumbs(params)
+    action :thumbs, :get do |params|
       current_folder_id = params[:current_folder_id] 
       current_folder = get_file_by_id(current_folder_id)
       children_ids = current_folder["children_ids"] || []
@@ -35,7 +35,7 @@ module HuiPluginPool
           :children => children}}
     end
 
-    def new_folder(params)
+    action :new_folder, :get do |params|
       current_folder_id = params[:current_folder_id] 
       current_folder = get_file_by_id(current_folder_id)
 
@@ -44,7 +44,7 @@ module HuiPluginPool
           :current_folder => current_folder}}
     end
 
-    def create_folder(params)
+    action :create_folder, :post do |params|
       name = if params[:name].blank? then 
                get_default_name
              else 
@@ -63,7 +63,7 @@ module HuiPluginPool
       {:redirect_to => "admin?current_folder_id=#{current_folder_id}"}
     end
 
-    def new_file(params)
+    action :new_file, :get do |params|
       current_folder_id = params[:current_folder_id] 
       current_folder = get_file_by_id(current_folder_id)
 
@@ -72,7 +72,7 @@ module HuiPluginPool
           :current_folder => current_folder}}
     end
 
-    def create_file(params)
+    action :create_file, :post do |params|
       begin
         create_file_with_upload(
           params[:current_folder_id], params[:name], params[:file])
@@ -84,7 +84,7 @@ module HuiPluginPool
       end
     end
 
-    def new_link_file(params)
+    action :new_link_file, :get do |params|
       current_folder_id = params[:current_folder_id] 
       current_folder = get_file_by_id(current_folder_id)
 
@@ -93,7 +93,7 @@ module HuiPluginPool
           :current_folder => current_folder}}
     end
 
-    def create_link_file(params)
+    action :create_link_file, :post do |params|
       current_folder_id = params[:current_folder_id] 
       current_folder = get_file_by_id(current_folder_id)
       link = params[:link]
@@ -111,7 +111,7 @@ module HuiPluginPool
       end
     end
 
-    def edit_name(params)
+    action :edit_name, :get do |params|
       current_folder_id = params[:current_folder_id] 
       f_id = params[:f_id]
       f = get_file_by_id(f_id)
@@ -121,7 +121,7 @@ module HuiPluginPool
           :f => f}}
     end
 
-    def update_name(params)
+    action :update_name, :post do |params|
       name = if params[:new_name].blank? then
                get_default_name
              else 
@@ -142,7 +142,7 @@ module HuiPluginPool
     # 这个文件的id、名字和链接。f_id可以为空，这时会默认为根目录。如果
     # 链接以http://开头，表示是外部链接，否则表示是内部链接。内部链接需
     # 要在前面加上会务平台服务器的地址才能访问。
-    def api_list(params)
+    action :list, :get, :api => true do |params|
       f_id = if params[:f_id].blank? then
                get_root_folder_id
              else
@@ -180,7 +180,7 @@ module HuiPluginPool
     # 接受四个参数：folder_id、user_id、name和file。其中folder_id是要上
     # 传到的目录的id，name表示在系统中所取的文件名，file则应该是一段
     # multipart的数据，表示文件内容。成功上传时返回{"ok": true}。
-    def api_upload(params)
+    action :upload, :post, :api => true do |params|
       begin
         user = get_friend("userslist").get_user_by_id(params[:user_id])
         username = if user then user["name"] else "" end

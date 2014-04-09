@@ -14,7 +14,7 @@ table
         - f = children[row * 5 + col]
         - if f then
           td
-            - if [".bmp", ".jpg", ".jpeg", ".gif", ".png"].include?(File.extname(f["physical_link"] || "")) then
+            - if [".bmp", ".jpg", ".jpeg", ".gif", ".png"].include?(File.extname(f["physical_link"] || "").downcase) then
               a href=f["physical_link"]
                 = image_tag children[row * 5 + col]["physical_link"], :width => 200
             - elsif f["is_folder"] then
