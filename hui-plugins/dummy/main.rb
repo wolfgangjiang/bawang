@@ -1,6 +1,6 @@
 module HuiPluginPool
   class Dummy < GenericHuiPlugin
-    def admin(params)
+    action :admin, :get do |params|
       {:text => "dummy admin page here"}
     end
   end
