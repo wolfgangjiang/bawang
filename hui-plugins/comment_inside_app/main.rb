@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 module HuiPluginPool
   class CommentInsideApp < GenericHuiPlugin
-    def admin(params)
+    action :admin, :get do |params|
       messages = get_table("messages").find.to_a.reverse
       {:file => "views/admin.slim",
         :locals => {
@@ -9,7 +9,7 @@ module HuiPluginPool
           :event_id => params[:event_id]}}
     end
 
-    def create(params)
+    action :create, :post do |params|
       get_table("messages").insert(
         :text => params[:message],
         :author_name => params[:author_name],
@@ -18,7 +18,7 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    def toggle(params)
+    action :toggle, :post do |params|
       object_id = BSON::ObjectId(params[:_id]) 
       message = get_table("messages").find_one("_id" => object_id)
       get_table("messages").update({"_id" => object_id},
@@ -26,7 +26,7 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    def api_poll(params)
+    action :poll, :get, :api => true do |params|
       data = get_table("messages").find(:active => true).map do |m|
         {:text => m["text"],
           :author_name => m["author_name"],
@@ -35,7 +35,7 @@ module HuiPluginPool
       {:json => data}
     end
 
-    def api_submit(params)
+    action :submit, :post, :api => true do |params|
       user = get_friend("userslist").get_user_by_id(params[:user_id])
       author_name = if user then user["name"] else "<未知>" end
 
