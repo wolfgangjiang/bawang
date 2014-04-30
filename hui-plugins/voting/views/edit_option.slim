@@ -1,0 +1,19 @@
+= link_to "返回",  "question?id=#{q_id}"
+
+= form_tag "post/update_option" do 
+  = label_tag "option_tag", "选项标签："
+  = text_field_tag "option_tag", option["option_tag"]
+  = label_tag "option_text", "选项内容："
+  = text_field_tag "option_text", option["option_text"]
+  = hidden_field_tag :q_id, q_id
+  = hidden_field_tag :o_id, option["_id"]
+  = submit_tag "确认"
+
+- if option["users"].empty?
+  p 暂无人投票
+- else
+  p 投票者：
+  table
+    - option["users"].each do |u|
+      tr
+        td= u["name"]

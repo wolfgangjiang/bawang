@@ -1,0 +1,8 @@
+h2 配置数据库表结构
+
+- if Rails.env != "production" then
+  = link_to "清空表结构", "post/clear", :method => :post
+
+= link_to "编辑", "edit"
+
+div#the_schema_container

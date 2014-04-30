@@ -1,0 +1,11 @@
+h2 编辑表结构
+
+= link_to "返回", "admin"
+
+= form_tag "post/save", {:class => "save_form"} do
+  = hidden_field_tag :data_to_be_saved, ""
+
+script
+  == "window.the_schema = #{schema};"
+
+div#the_schema_container

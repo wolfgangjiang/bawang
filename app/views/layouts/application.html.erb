@@ -7,8 +7,9 @@
   <%= csrf_meta_tags %>
 </head>
 <body>
-<%= link_to("注销", "/sessions", :method => :delete) %>
-<%= yield %>
-
+<div class="main">
+  <%= link_to("注销", "/sessions", :method => :delete) %>
+  <%= yield %>
+</div>
 </body>
 </html>

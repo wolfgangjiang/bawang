@@ -5,9 +5,20 @@ html
     = stylesheet_link_tag    "application", media: "all", "data-turbolinks-track" => true
     = javascript_include_tag "application", "data-turbolinks-track" => true
     = csrf_meta_tags
+  javascript:
+    if((typeof window.Hui) === "object" &&
+      (typeof window.Hui["#{@plugin_code_name}"]) === "object" &&
+      (typeof window.Hui["#{@plugin_code_name}"]["#{@plugin_action}"]) === "object" &&
+      (typeof window.Hui["#{@plugin_code_name}"]["#{@plugin_action}"].onload) === "function") {
+      window.onload = 
+        window.Hui["#{@plugin_code_name}"]["#{@plugin_action}"].onload;
+    } else if("#{Rails.env}" === "development") { // check Rails.env
+      console.log("plugin onload is not defined, window.Hui=")
+      console.log(window.Hui);
+    }
   body
-    = link_to("注销", "/sessions", :method => :delete)
-    span= " "
-    = link_to("返回项目首页", "/events/#{@event_id}")
-    br
-    = yield
+    .main
+      = link_to("注销", "/sessions", :method => :delete)
+      = link_to("返回项目首页", "/events/#{@event_id}")
+      br
+      = yield

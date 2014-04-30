@@ -1,0 +1,9 @@
+p
+  span= link_to "创建题目", "new_question"
+
+table
+  - votings.each do |v|
+    tr
+      td= link_to "查看", "question?id=#{v['_id']}"
+      td= link_to "删除", "post/remove_question?id=#{v['_id']}", :method => "post"
+      td= v["question_text"]
