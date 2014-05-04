@@ -1,4 +1,4 @@
-= link_to "返回",  "question?id=#{q_id}"
+= link_to "返回",  "option?q_id=#{q_id}&o_id=#{option['_id']}"
 
 = form_tag "post/update_option" do 
   = label_tag "option_tag", "选项标签："
@@ -17,3 +17,4 @@
     - option["users"].each do |u|
       tr
         td= u["name"]
+        td= u["submitted_at"].try(:getlocal)

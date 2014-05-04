@@ -1,9 +1,11 @@
-= link_to "返回",  "question?q_id=#{q_id}"
+= link_to "返回",  "question?id=#{q_id}"
 
 = form_tag "post/create_option" do 
   = label_tag "option_tag", "选项标签："
   = text_field_tag "option_tag"
+  br
   = label_tag "option_text", "选项内容："
   = text_field_tag "option_text"
   = hidden_field_tag :q_id, q_id
+  br
   = submit_tag "创建"

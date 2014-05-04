@@ -1,7 +1,9 @@
 = link_to "问题列表", "admin"
 
 p= question["question_text"]
+div= human_question_types[question["question_type"]]
 
+= link_to "编辑文本", "edit_question?id=#{question['_id']}"
 = link_to "添加选项", "new_option?q_id=#{question['_id']}"
 p 选项：
 
@@ -11,8 +13,9 @@ p 选项：
   table
     - question["options"].each do |o|
       tr
-        td= o["option_tag"]
+        td= o["option_tag"].to_s + "."
         td= o["option_text"]
         td= o["users"].size
-        td= link_to "查看", "edit_option?q_id=#{question['_id']}&o_id=#{o['_id']}"
+        td= link_to "查看", "option?q_id=#{question['_id']}&o_id=#{o['_id']}"
+        td= link_to "删除", "post/remove_option?q_id=#{question['_id']}&o_id=#{o['_id']}", :method => :post
 

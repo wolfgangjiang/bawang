@@ -3,4 +3,8 @@
 = form_tag "post/create_question" do
   = label_tag "question_text", "问题内容："
   = text_field_tag "question_text"
+  br
+  = label_tag "question_type", "问题类型："
+  = select_tag "question_type", options_for_select(human_question_types.invert)
+  br
   = submit_tag "创建"

@@ -1,0 +1,17 @@
+= link_to "返回",  "question?id=#{q_id}"
+
+div
+  span= option["option_tag"].to_s + ". "
+  span= option["option_text"]
+
+= link_to "编辑文本", "edit_option?q_id=#{q_id}&o_id=#{option['_id']}"
+
+- if option["users"].empty?
+  p 暂无人投票
+- else
+  p 投票者：
+  table
+    - option["users"].each do |u|
+      tr
+        td= u["name"]
+        td= u["submitted_at"].try(:getlocal)

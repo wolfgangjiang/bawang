@@ -1,21 +1,63 @@
 # -*- coding: utf-8 -*-
 module HuiPluginPool
   class Voting < GenericHuiPlugin
+    HumanQuestionTypes = {
+      "single_choice" => "单选",
+      "multiple_choice" => "多选"
+    }
+
     action :admin, :get do |params|
-      votings = get_table("voting").find("_kind" => "question").to_a
+      questions = get_table("voting").
+        find("_kind" => "question").
+        sort({"is_current" => -1}).to_a
 
       {:file => "views/admin.slim",
-        :locals => {:votings => votings}}
+        :locals => {
+          :questions => questions,
+          :human_question_types => HumanQuestionTypes}}
+    end
+
+    action :clear, :post do |params|
+      if Rails.env == "production" then
+        raise "not permitted to clear data in production mode"
+      else
+        get_table("voting").remove
+      end
+
+      {:redirect_to => "admin"}
+    end
+
+    action :set_to_current, :post do |params|
+      get_table("voting").update(
+        {"_kind" => "question"},
+        {"$set" => {"is_current" => false}},
+        {:multi => true})
+      get_table("voting").update(
+        {"_id" => ensure_bson_id(params[:id]),
+          "_kind" => "question"},
+        {"$set" => {"is_current" => true}})
+
+      {:redirect_to => "admin"}
     end
 
     action :new_question, :get do |params|
-      {:file => "views/new_question.slim"}
+      {:file => "views/new_question.slim",
+        :locals => {
+          :human_question_types => HumanQuestionTypes}}
     end
 
     action :create_question, :post do |params|
+      sanitized_question_type = 
+        if params[:question_type] == "multiple_choice" then
+          "multiple_choice"
+        else # 不认识的输入一律认为是单选
+          "single_choice"
+        end
+
       get_table("voting").insert(
         "_kind" => "question",
         "question_text" => params[:question_text],
+        "question_type" => sanitized_question_type,
         "create_at" => Time.now,
         "option_ids" => []);
       {:redirect_to => "admin"}
@@ -28,7 +70,32 @@ module HuiPluginPool
           "_kind" => "option"}).to_a
 
       {:file => "views/question.slim",
-        :locals => {:question => q}}
+        :locals => {:question => q,
+          :human_question_types => HumanQuestionTypes}}
+    end
+
+    action :edit_question, :get do |params|
+      q = get_question_by_id(params[:id])
+
+      {:file => "views/edit_question.slim",
+        :locals => {:question => q,
+          :human_question_types => HumanQuestionTypes}}      
+    end
+
+    action :update_question, :post do |params|
+      sanitized_question_type = 
+        if params[:question_type] == "multiple_choice" then
+          "multiple_choice"
+        else # 不认识的输入一律认为是单选
+          "single_choice"
+        end
+
+      get_table("voting").update(
+        {"_id" => ensure_bson_id(params[:id]),
+          "_kind" => "question"},
+        {"$set" => {"question_text" => params[:question_text],
+            "question_type" => sanitized_question_type}})
+      {:redirect_to => "question?id=#{params[:id]}"}
     end
 
     action :remove_question, :post do |params|
@@ -57,10 +124,18 @@ module HuiPluginPool
           "users" => []})
       get_table("voting").update(
         {"_id" => q["_id"]},
-        {"$push" => {"option_ids" => o_id}})
-          
+        {"$push" => {"option_ids" => o_id}})          
 
       {:redirect_to => "question?id=#{params[:q_id]}"}
+    end
+
+    action :option, :get do |params|
+      o = get_table("voting").find_one("_id" => BSON::ObjectId(params[:o_id]))
+
+      {:file => "views/option.slim",
+        :locals => {
+          :q_id => params[:q_id],
+          :option => o}}      
     end
 
     action :edit_option, :get do |params|
@@ -74,40 +149,79 @@ module HuiPluginPool
 
     action :update_option, :post do |params|
       get_table("voting").update(
-        {"_id" => BSON::ObjectId(params[:o_id])},
+        {"_id" => ensure_bson_id(params[:o_id])},
         {"$set" => {
             "option_tag" => params[:option_tag],
             "option_text" => params[:option_text]}})
-      {:redirect_to => "question?id=#{params[:q_id]}"}
+      {:redirect_to => "option?q_id=#{params[:q_id]}&o_id=#{params[:o_id]}"}
     end
 
-    action :get_questions, :get, :api => true do |params|
-      qs = get_table("voting").find("_kind" => "question").to_a
-      
+    action :remove_option, :post do |params|
+      get_table("voting").remove({"_id" => ensure_bson_id(params[:o_id])})
+      get_table("voting").update(
+        {"_id" => ensure_bson_id(params[:q_id])},
+        {"$pull" => {"option_ids" => ensure_bson_id(params[:o_id])}})
+
+      {:redirect_to => "question?id=#{params[:q_id]}"}      
     end
 
+    action :get_question_list, :get, :api => true do |params|
+      qs = get_table("voting").find("_kind" => "question").map do |q|
+        pick_question_info(q)
+      end
+
+      {:json => qs}
+    end
+
+    action :get_question_detail, :get, :api => true do |params|
+      q = get_question_by_id(params[:id])
+
+      {:json => pick_question_info_with_options(q)}
+    end
+
+    action :get_current_question_detail, :get, :api => true do |params|
+      q = get_table("voting").find_one("is_current" => true)
+
+      {:json => pick_question_info_with_options(q)}
+    end
+
+    # 对多选的问题，api的形式应该是形如"AC"，一个字符串仅包含选中的选项
+    # 标签。
     action :submit_vote, :post, :api => true do |params|
       user = get_friend("userslist").get_user_by_id(params[:user_id])
-      username = if user then user["name"] else "不详" end
+      username = if user then user["name"] else "<不详>" end
+      vote_item = {
+        "user_id" => params[:user_id],
+        "name" => username,
+        "submitted_at" => Time.now
+      }
 
-      o = get_table("voting").find_one(
-        {"question_id" => BSON::ObjectId(params[:question_id]),
-          "option_tag" => params[:option_tag]})
+      q = get_question_by_id(params[:question_id])
 
-      if o then
-        get_table("voting").update(
-          {"question_id" => BSON::ObjectId(params[:question_id]),
-            "option_tag" => params[:option_tag]},
-          {"$push" => {"users" => {
-                "user_id" => params[:user_id], "name" => username}}})
-
-        {:json => {:ok => true}}
+      if q.nil? then
+        {:json => {:err => "no such question"}}
+      elsif q["question_type"] == "multiple_choice" then
+        commit_multiple_choice_vote(
+          ensure_bson_id(params[:question_id]),
+          params[:option_tag],
+          vote_item)
       else
-        {:json => {:err => "no such question or option"}}
+        commit_single_choice_vote(
+          ensure_bson_id(params[:question_id]),
+          params[:option_tag],
+          vote_item)
       end
     end
 
     private
+
+    def ensure_bson_id(_id)
+      begin
+        BSON::ObjectId(_id)
+      rescue BSON::InvalidObjectId
+        nil
+      end
+    end
 
     def get_question_by_id(_id)
       begin
@@ -118,6 +232,72 @@ module HuiPluginPool
       rescue BSON::InvalidObjectId
         nil
       end
+    end
+
+    def commit_multiple_choice_vote(question_id, raw_option_tags, vote_item)
+      option_tags = raw_option_tags.split(//).uniq
+
+      os = get_table("voting").find(
+        {"question_id" => question_id,
+          "option_tag" => {"$in" => option_tags}}).to_a
+
+      get_table("voting").update(
+        {"question_id" => question_id,
+          "option_tag" => {"$in" => option_tags}},
+        {"$push" => {"users" => vote_item}},
+        {:multi => true})
+
+      if os.length == option_tags.length then
+        {:json => {:ok => true}}
+      else
+        accepted_options = os.map {|o| o["option_tag"]}
+        ignored_options = option_tags - accepted_options
+        {:json => {:ok => true,
+            :accepted_options => accepted_options.join,
+            :ignored_options => ignored_options.join}}
+      end      
+    end
+
+    def commit_single_choice_vote(question_id, option_tag, vote_item)
+      o = get_table("voting").find_one(
+        {"question_id" => question_id, "option_tag" => option_tag})
+    
+      if o then
+        get_table("voting").update(
+          {"question_id" => question_id,
+            "option_tag" => option_tag},
+          {"$push" => {"users" => vote_item}})
+
+        {:json => {:ok => true}}
+      else
+        {:json => {:err => "no such option: #{option_tag}"}}
+      end
+    end
+
+    def pick_question_info(q)
+      if q then
+        {"_id" => q["_id"].to_s,
+          "question_text" => q["question_text"],
+          "question_type" => q["question_type"],
+          "is_current" => !!q["is_current"],
+          "create_at" => q["create_at"]}
+      else
+        {}
+      end
+    end
+
+    def pick_question_info_with_options(q)
+      q_info = pick_question_info(q)
+
+      os = get_table("voting").find({"_kind" => "option", "question_id" => q["_id"]}).map do |o|
+        {"option_text" => o["option_text"],
+          "option_tag" => o["option_tag"],
+          "users" => o["users"]}
+      end
+
+      q_info["options"] = os
+
+      q_info
     end
   #   PhysicalLinkDepth = 4
 
