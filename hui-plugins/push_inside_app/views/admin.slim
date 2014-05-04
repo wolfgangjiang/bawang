@@ -1,19 +1,26 @@
-h2 App内推送管理
+h3 App内推送管理
 
 p= "轮询API: /plugins/api/#{event_id}/push_inside_app/poll"
 
-= form_tag "post/create" do
-  = label_tag :message, "群发新消息:"
-  = text_field_tag :message
-  = submit_tag "群发"
+.sendbox
+  .row
+      .col-md-12
+        = form_tag "post/create" do
+          = label_tag :message, "群发新消息:"
+          = text_area_tag :message,'',:class=>'form-control'
+          = submit_tag "群  发",:class=>'btn btn-success btn-lg sendbtn'
+p
 
-table
   - messages.each do |m|
-    tr
-      td= m["create_at"].getlocal
-      td= m["text"]
-      td= if m["active"] then "有效" else "隐藏" end
-      td
-        = form_tag "post/toggle" do
-          = hidden_field_tag "_id", m["_id"]
-          = submit_tag "切换状态"
+    .row
+      .col-md-12
+        .col-md-12.messagerow= m["text"]
+      .col-md-12.statusrow
+        .col-md-3= m["create_at"].getlocal
+        .col-md-7
+        .col-md-1= if m["active"] then "有效" else "隐藏" end
+        .col-md-1
+          = form_tag "post/toggle" do
+            = hidden_field_tag "_id", m["_id"]
+            = submit_tag "切换状态", :class=>'btn btn-default btn-xs'
+

@@ -11,3 +11,20 @@
  *= require_self
  *= require_tree .
  */
+
+.wrap{
+  margin-top: 70px;
+}
+
+thead{
+  background-color: #76abd7;
+  color:white;
+
+}
+
+.loginform{
+  margin-top: 200px;
+  margin-left: 25%;
+  width: 50%;
+
+}

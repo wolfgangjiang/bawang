@@ -1,9 +1,24 @@
-h2= "配置 #{@event['title']} 的插件"
+ol.breadcrumb
+  li
+    span.glyphicon.glyphicon-home
+  li
+    = link_to "功能列表", "/events/#{@event['_id']}"
+  li.active
+    = link_to "增减功能插件", "#"
+
+
+h3= "配置 #{@event['title']} 的插件"
 
 = form_tag "/events/#{@event['_id']}/plugin_change" do
-  table
+  table.table.talbe-responsive.table-hover
+    thead
+      th
+      th 插件名称
+      th 功能名称
+
+    tbody
     - @all_plugins.select(&:mandatory).each do |plugin|
-      tr
+      tr.warning
         td 必选
         td= plugin.code_name + ":"
         td= plugin.human_name
@@ -13,4 +28,5 @@ h2= "配置 #{@event['title']} 的插件"
         td= plugin.code_name + ":"
         td= plugin.human_name
   br
-  = submit_tag "提交"
+  = submit_tag "提 交", :class=>"btn btn-success"
+

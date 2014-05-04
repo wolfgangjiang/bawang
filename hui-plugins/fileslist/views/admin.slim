@@ -1,28 +1,36 @@
-h2 文件管理
+h3 文件管理
 
-p
-  span= link_to "创建新目录", "new_folder?current_folder_id=#{current_folder_id}"
-  span= link_to "上传新文件", "new_file?current_folder_id=#{current_folder_id}"
-  span= link_to "粘贴链接创建新文件", "new_link_file?current_folder_id=#{current_folder_id}"
+.btnbar
+  = link_to "<span class=\"glyphicon glyphicon-file\"> 创建新目录</span>".html_safe, "new_folder?current_folder_id=#{current_folder_id}",:class=>"btn btn-primary"
+  = link_to "<span class=\"glyphicon glyphicon-cloud-upload\"> 上传新文件</span>".html_safe, "new_file?current_folder_id=#{current_folder_id}", :class=>"btn btn-success"
+  = link_to "<span class=\"glyphicon glyphicon glyphicon-link\"> 云下载</span>".html_safe, "new_link_file?current_folder_id=#{current_folder_id}", :class=>"btn btn-default"
 
 p
   = "当前目录：#{current_folder['name']}"
   br
   - if current_folder["parent_id"] then
-    = link_to "去上级目录", "admin?current_folder_id=#{current_folder['parent_id']}"
-= link_to "图片预览模式", "thumbs?current_folder_id=#{current_folder_id}"
+    = link_to "<span class=\"glyphicon glyphicon-chevron-left\"> 返回上一级目录</span>".html_safe, "admin?current_folder_id=#{current_folder['parent_id']}"
+= link_to "<span class=\"glyphicon glyphicon-th\"> 图片预览模式</span>".html_safe, "thumbs?current_folder_id=#{current_folder_id}"
 
 
-table
-  - children.each do |f|
-    tr
-      td= if f["is_folder"] then "目录" else "文件" end
-      - if f["is_folder"] then
-        td= link_to f["name"], "admin?current_folder_id=#{f['_id']}"
-        td 目录
-      - else
-        td= link_to f["name"], f["physical_link"]
-        td= File.extname(f["physical_link"])
-      td= f['create_at'].getlocal
-      td= f['creator']
-      td= link_to "改名", "edit_name?current_folder_id=#{current_folder_id}&f_id=#{f['_id']}"
+table.table.talbe-responsive.table-hover
+  thead
+    th 类型
+    th 名称
+    th 资源种类
+    th 创建日期
+    th 创建者
+    th 操作
+  tbody
+    - children.each do |f|
+      tr
+        td= if f["is_folder"] then "目录" else "文件" end
+        - if f["is_folder"] then
+          td= link_to f["name"], "admin?current_folder_id=#{f['_id']}"
+          td 目录
+        - else
+          td= link_to f["name"], f["physical_link"]
+          td= File.extname(f["physical_link"])
+        td= f['create_at'].getlocal
+        td= f['creator']
+        td= link_to "改名", "edit_name?current_folder_id=#{current_folder_id}&f_id=#{f['_id']}"

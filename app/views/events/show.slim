@@ -1,17 +1,32 @@
-p= link_to "返回列表", "/events"
+ol.breadcrumb
+  li
+    span.glyphicon.glyphicon-home
+  li.active
+    = link_to "返回列表", "/events"
+
+
+
 h2= @event["title"]
 p= "创建于#{@event['create_at'].try(:getlocal)}"
 p= @event["desc"]
 - if Rails.env != "production" then
   = link_to "清空这个项目的所有数据（调试用，在production模式下无效）", "/events/#{@event['_id']}", :method => :delete
-p= "已激活插件："
+p
+h3= "已激活功能插件："
+p
 - if @event_plugins_is_empty then
   p 无
 - else
-  table
-    - @event_plugins.each do |p|
-      tr
-        td= p.code_name
-        td= p.human_name
-        td= link_to "管理插件", "/plugins/#{@event['_id']}/#{p.code_name}/admin"
-p= link_to "增减插件", "/events/#{@event['_id']}/plugin_select"
+  table.table.talbe-responsive.table-hover
+    thead
+      th 插件名称
+      th 功能名称
+      th 功能
+
+    tbody
+      - @event_plugins.each do |p|
+        tr
+          td= p.code_name
+          td= p.human_name
+          td= link_to " 管理", "/plugins/#{@event['_id']}/#{p.code_name}/admin",:class=>"glyphicon glyphicon-folder-open"
+p= link_to "增减功能插件", "/events/#{@event['_id']}/plugin_select", :class=>'btn btn-danger'

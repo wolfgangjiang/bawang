@@ -1,11 +1,26 @@
-p 
-  = link_to "创建新项目", "/events/new"
-  = " "
-  = link_to "用户主表", "/users"
-table
-  - @events.each do |e|
-    tr
-      td= e["title"]
-      td= e["creator"]
-      td= e["create_at"].try(:getlocal)
-      td= link_to "管理", "/events/#{e["_id"]}"
+ol.breadcrumb
+  li
+    span.glyphicon.glyphicon-home
+  li.active
+    |项目列表
+.btn
+  = link_to "<span class=\"glyphicon glyphicon-plus-sign\"> 创建新项目</span>".html_safe, "/events/new", :class=>'btn btn-primary '
+  = "    "
+  = link_to "<span class=\"glyphicon glyphicon-user\"> 用户主表</span>".html_safe, "/users", :class=>'btn btn-default'
+
+
+
+table.table.talbe-responsive.table-hover
+  thead
+    th 标题
+    th 创建者
+    th 创建日期
+    th 操作
+
+  tbody
+    - @events.each do |e|
+      tr
+        td= e["title"]
+        td= e["creator"]
+        td= e["create_at"].try(:getlocal)
+        td= link_to " 管理", "/events/#{e["_id"]}", :class=>"glyphicon glyphicon-folder-open"

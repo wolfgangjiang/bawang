@@ -1,0 +1,45 @@
+
+
+#piccell{
+  float: left;
+  width: 140px;
+  height: 128px;
+  margin-left: 4px;
+  margin-right: 4px;
+  background-color: #ccc;
+  display: inline-block;
+}
+
+.sendbox{
+  background-color: #eee;
+  border-radius: 5px;
+  padding: 12px;
+  margin-bottom: 1em;
+}
+
+.sendbtn{
+  float:right;
+}
+
+textarea{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.statusrow{
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 2em;
+}
+
+.messagerow{
+
+  font-size: 18px;
+  line-height: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.messagerow:hover{
+  background-color: #eee;
+}
+

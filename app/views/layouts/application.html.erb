@@ -7,9 +7,30 @@
   <%= csrf_meta_tags %>
 </head>
 <body>
-<div class="main">
-  <%= link_to("注销", "/sessions", :method => :delete) %>
-  <%= yield %>
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container">
+
+    <div class = "navbar-header">
+      <div class = "navbar-brand">
+        会议管理后台
+      </div>
+    </div>
+
+    <div class ="navbar-collapse collapse">
+      <ul class="nav navbar-nav navbar-right">
+        <li class="navbar-text"><%=session[:current_user_name] %></li>
+        <li><%= link_to("注销", "/sessions", :method => :delete) %></li>
+
+      </ul>
+    </div>
+
+  </div>
 </div>
+<div class="wrap">
+  <div class="container">
+    <%= yield %>
+  </div>
+</div>
+
 </body>
 </html>

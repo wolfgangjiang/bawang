@@ -10,15 +10,32 @@ html
       (typeof window.Hui["#{@plugin_code_name}"]) === "object" &&
       (typeof window.Hui["#{@plugin_code_name}"]["#{@plugin_action}"]) === "object" &&
       (typeof window.Hui["#{@plugin_code_name}"]["#{@plugin_action}"].onload) === "function") {
-      window.onload = 
+      window.onload =
         window.Hui["#{@plugin_code_name}"]["#{@plugin_action}"].onload;
     } else if("#{Rails.env}" === "development") { // check Rails.env
       console.log("plugin onload is not defined, window.Hui=")
       console.log(window.Hui);
     }
   body
-    .main
-      = link_to("注销", "/sessions", :method => :delete)
-      = link_to("返回项目首页", "/events/#{@event_id}")
-      br
-      = yield
+    .navbar.navbar-inverse.navbar-fixed-top
+      .container
+        .navbar-header
+          .navbar-brand
+            |会议管理后台
+
+        .navbar-collapse.collapse
+          ul.nav.navbar-nav.navbar-right
+            li.navbar-text
+              = session[:current_user_name]
+            li
+              = link_to("注销", "/sessions", :method => :delete)
+
+    .wrap
+      .container
+        ol.breadcrumb
+          li
+            span.glyphicon.glyphicon-home
+          li
+            = link_to("返回项目首页", "/events/#{@event_id}")
+
+        = yield

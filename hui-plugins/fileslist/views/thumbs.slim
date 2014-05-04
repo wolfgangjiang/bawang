@@ -4,19 +4,19 @@ p
   = "当前目录：#{current_folder['name']}"
   br
   - if current_folder["parent_id"] then
-    = link_to "去上级目录", "thumbs?current_folder_id=#{current_folder['parent_id']}"
-= link_to "列表模式", "admin?current_folder_id=#{current_folder_id}"
+    = link_to "<span class=\"glyphicon glyphicon-chevron-left\"> 返回上一级目录</span>".html_safe, "thumbs?current_folder_id=#{current_folder['parent_id']}"
+= link_to "<span class=\"glyphicon glyphicon-th-list\"> 列表模式</span>".html_safe, "admin?current_folder_id=#{current_folder_id}"
 
-table
+table.pictable
   - (children.size.div(5) + 1).times do |row|
     tr
       - 5.times do |col|
         - f = children[row * 5 + col]
         - if f then
-          td
+          td#piccell
             - if [".bmp", ".jpg", ".jpeg", ".gif", ".png"].include?(File.extname(f["physical_link"] || "").downcase) then
               a href=f["physical_link"]
-                = image_tag children[row * 5 + col]["physical_link"], :width => 200
+                = image_tag children[row * 5 + col]["physical_link"], :width => 128
             - elsif f["is_folder"] then
               = link_to "[#{f['name']}]", "thumbs?current_folder_id=#{f['_id']}"
               br

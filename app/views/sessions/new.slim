@@ -1,8 +1,13 @@
-h1 会务平台
-= form_tag "/sessions" do
-  = label_tag :email, '邮箱'
-  = text_field_tag :email
-  = label_tag :password, '密码'
-  = password_field_tag :password
-  = submit_tag '登录'
-p= flash[:message]
+.loginform
+  .panel.panel-primary
+    .panel-heading
+      b 登 录
+    .panel-body
+      = form_tag "/sessions" do
+        = label_tag :email, '邮箱'
+        = text_field_tag :email,nil, :class=>'form-control'
+        = label_tag :password, '密码'
+        = password_field_tag :password,nil, :class=>'form-control'
+        p
+        = submit_tag '登 录', :class=>'btn btn-success btn-block'
+      p= flash[:message]

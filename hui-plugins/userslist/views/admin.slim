@@ -1,31 +1,43 @@
-h2 项目内的用户管理
+h3 项目内的用户管理
+.btnbar
+  = link_to "添加一个用户", "new",:class=>"btn btn-primary"
+  = " "
+  = link_to "批量导入csv", "import_select_file", :class=>"btn btn-success"
+  = link_to "清空", "post/clear", :method => :post, :class=>"btn btn-danger"
 
-= link_to "添加一个用户", "new"
-= " "
-= link_to "批量导入csv", "import_select_file"
-br
-= link_to "清空", "post/clear", :method => :post
+  - if usersync_task_status then
+    p= "当前有用户同步任务在后台进行，进度：#{usersync_task_status['progress']} / #{usersync_task_status['total']} （请手动刷新页面观察进度）"
+  - else
+    p= link_to "开始同步所有用户（这将是在后台进行的较长时间任务）", "post/sync_all", :method => :post
 
-p= "当前用户数：#{users_count}"
+.sum
+  span.glyphicon.glyphicon-user 当前用户数：#{users_count}
 
-- if usersync_task_status then
-  p= "当前有用户同步任务在后台进行，进度：#{usersync_task_status['progress']} / #{usersync_task_status['total']} （请手动刷新页面观察进度）"
-- else
-  p= link_to "开始同步所有用户（这将是在后台进行的较长时间任务）", "post/sync_all", :method => :post
-
-table
-  tr
+table.table.talbe-responsive.table-hover
+  thead
     - columns.each do |col|
       th= human_columns[col]
-  - users.each do |u|
-    tr
-      - columns.each do |col|
-        td= u[col]
-      td= link_to "移除", "post/destroy?user_id=#{u['_id']}", :method => :post
-      td= link_to "修改属性", "edit?user_id=#{u['_id']}"
-      td= link_to "重置密码", "edit_password?user_id=#{u['_id']}"
-      td= link_to "单体同步", "post/sync_one?user_id=#{u['_id']}", :method => :post
-      - if u['hui_sync_time'] then
-        td= "（在 #{u['hui_sync_time'].getlocal} #{u['hui_sync_status']}）"
-      - else
-        td （尚未同步）
+    th 操作
+
+  tbody
+    - users.each do |u|
+      tr
+        - columns.each do |col|
+          td= u[col]
+        td
+          = link_to "", "post/destroy?user_id=#{u['_id']}", :method => :post, :class=>'glyphicon glyphicon-trash', :title=>'删除该用户'
+
+          = link_to "", "edit?user_id=#{u['_id']}", :class=>'glyphicon glyphicon-edit', :title=>'编辑用户信息'
+
+          = link_to "", "edit_password?user_id=#{u['_id']}",:class=>'glyphicon glyphicon-wrench', :title=>'重设密码'
+
+          = link_to "", "post/sync_one?user_id=#{u['_id']}", :method => :post,:class=>'glyphicon glyphicon-refresh', :title=>'单体同步'
+
+
+          - if u['hui_sync_time'] then
+            / = "（在 #{u['hui_sync_time'].getlocal} #{u['hui_sync_status']}）"
+            =link_to "","",:class=>'glyphicon glyphicon-saved',:title=>"（在 #{u['hui_sync_time'].getlocal} #{u['hui_sync_status']}）"
+          - else
+            / = '（尚未同步）'
+            =link_to "","",:class=>'glyphicon glyphicon-exclamation-sign',:title=>"尚未完成同步"
+

@@ -1,6 +1,7 @@
-h2 修改用户属性
+h3 修改用户属性
 
 p= link_to "返回项目用户列表", "admin"
+
 = form_tag "post/update" do
   p= hidden_field_tag :user_id, user["_id"]
   table
@@ -8,4 +9,4 @@ p= link_to "返回项目用户列表", "admin"
       tr
         td= human_columns[col]
         td= text_field_tag col, user[col]
-  p= submit_tag "完成"
+  p= submit_tag "完成", :class=>"btn btn-success"

@@ -1,10 +1,22 @@
-= form_tag "/events" do
-  = label_tag :title, "项目名称"
-  br
-  = text_field_tag :title
-  br
-  = label_tag :desc, "说明"
-  br
-  = text_area_tag :desc
-  br
-  = submit_tag "创建"
+ol.breadcrumb
+  li
+    span.glyphicon.glyphicon-home
+  li.active
+    = link_to "返回列表", "/events"
+
+= form_tag "/events" do |f|
+  .row
+    col-md-9
+      .field.form-group
+        p
+        = label_tag :title, "项目名称"
+        p
+          = text_field_tag :title, nil, :class=>'form-control'
+      .field
+        p
+        = label_tag :desc, "说明"
+        p
+        = text_area_tag :desc, nil, :class=>'form-control'
+      .field.form-group
+        p
+        = submit_tag "创建",:class=>'btn btn-success'

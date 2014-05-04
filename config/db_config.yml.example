@@ -1,9 +1,0 @@
-development:
-  server: localhost
-  db: hui_dev
-production: 
-  server: localhost
-  db: hui_prod
-test: 
-  server: localhost
-  db: hui_test
