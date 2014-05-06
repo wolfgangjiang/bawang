@@ -6,6 +6,13 @@ module HuiPluginPool
       "multiple_choice" => "多选"
     }
 
+    HumanValidationResult = {
+      :ok => "有效",
+      :duplicated => "重复投票",
+      :not_on_time => "不在规定时间内",
+      :unrecognized => "不在规定选项内"
+    }
+
     action :admin, :get do |params|
       questions = get_table("voting").
         find("_kind" => "question").
@@ -35,7 +42,9 @@ module HuiPluginPool
       get_table("voting").update(
         {"_id" => ensure_bson_id(params[:id]),
           "_kind" => "question"},
-        {"$set" => {"is_current" => true}})
+        {"$set" => {
+            "is_current" => true,
+            "started_at" => Time.now}})
 
       {:redirect_to => "admin"}
     end
@@ -59,18 +68,23 @@ module HuiPluginPool
         "question_text" => params[:question_text],
         "question_type" => sanitized_question_type,
         "create_at" => Time.now,
+        "relative_deadline" => params[:relative_deadline],
+        "permit_duplicate" => !!params[:permit_duplicate],
+        "vote_items" => [],
         "option_ids" => []);
       {:redirect_to => "admin"}
     end
 
     action :question, :get do |params|
       q = get_question_by_id(params[:id])
-      q["options"] = get_table("voting").find(        
+      os = get_table("voting").find(        
         {"_id" => {"$in" => q["option_ids"]},
           "_kind" => "option"}).to_a
+      compute_votes(q, os)
 
       {:file => "views/question.slim",
         :locals => {:question => q,
+          :options => os,
           :human_question_types => HumanQuestionTypes}}
     end
 
@@ -94,7 +108,9 @@ module HuiPluginPool
         {"_id" => ensure_bson_id(params[:id]),
           "_kind" => "question"},
         {"$set" => {"question_text" => params[:question_text],
-            "question_type" => sanitized_question_type}})
+            "question_type" => sanitized_question_type,
+            "relative_deadline" => params[:relative_deadline],
+            "permit_duplicate" => !!params[:permit_duplicate]}})
       {:redirect_to => "question?id=#{params[:id]}"}
     end
 
@@ -107,6 +123,64 @@ module HuiPluginPool
         {"_kind" => "question",
           "_id" => BSON::ObjectId(params[:id])})
       {:redirect_to => "admin"}
+    end
+
+    action :poll_question_status, :get do |params|
+      q = get_question_by_id(params[:id])
+
+      remaining_time_message =
+        if q["started_at"].blank? then
+          "尚未开始"
+        else
+          started_at = "（开始时间 #{q['started_at'].getlocal}）"
+          if q["relative_deadline"].blank? then
+            "正在进行#{started_at}"
+          else
+            deadline = q["started_at"] + q["relative_deadline"].to_i
+            if deadline < Time.now then
+              "已经结束#{started_at}"
+            else
+              remaining_time = (deadline - Time.now).to_i
+              "剩余时间：#{remaining_time} 秒#{started_at}"
+            end
+          end
+        end
+
+      os = get_table("voting").find(        
+        {"_id" => {"$in" => q["option_ids"]},
+          "_kind" => "option"}).to_a
+      compute_votes(q, os)
+
+      {:json => {
+          :remaining_time_message => remaining_time_message,
+          :options => os}}
+    end
+
+    action :vote_items, :get do |params|
+      q = get_question_by_id(params[:q_id])
+      os = get_table("voting").find(        
+        {"_id" => {"$in" => q["option_ids"]},
+          "_kind" => "option"}).to_a
+      compute_votes(q, os)
+
+      {:file => "views/vote_items.slim",
+        :locals => {
+          :question => q,
+          :vote_items => q["vote_items"],
+          :human_validation_result => HumanValidationResult}}
+    end
+
+    action :unrecognized_vote_items, :get do |params|
+      q = get_question_by_id(params[:q_id])
+      os = get_table("voting").find(        
+        {"_id" => {"$in" => q["option_ids"]},
+          "_kind" => "option"}).to_a
+      compute_votes(q, os)
+
+      {:file => "views/unrecognized_vote_items.slim",
+        :locals => {:question => q,
+          :vote_items => q["unrecognized_vote_items"],
+      :human_validation_result => HumanValidationResult}}
     end
 
     action :new_option, :get do |params|
@@ -130,12 +204,18 @@ module HuiPluginPool
     end
 
     action :option, :get do |params|
-      o = get_table("voting").find_one("_id" => BSON::ObjectId(params[:o_id]))
+      q = get_question_by_id(params[:q_id])
+      os = get_table("voting").find(        
+        {"_id" => {"$in" => q["option_ids"]},
+          "_kind" => "option"}).to_a
+      compute_votes(q, os)
+      o = os.find {|op| op["_id"].to_s == params[:o_id]}
 
       {:file => "views/option.slim",
         :locals => {
           :q_id => params[:q_id],
-          :option => o}}      
+          :option => o,
+          :human_validation_result => HumanValidationResult}}
     end
 
     action :edit_option, :get do |params|
@@ -191,25 +271,23 @@ module HuiPluginPool
       user = get_friend("userslist").get_user_by_id(params[:user_id])
       username = if user then user["name"] else "<不详>" end
       vote_item = {
+        "_id" => BSON::ObjectId.new,
         "user_id" => params[:user_id],
         "name" => username,
-        "submitted_at" => Time.now
+        "submitted_at" => Time.now,
+        "option_tag" => params[:option_tag]
       }
 
       q = get_question_by_id(params[:question_id])
 
       if q.nil? then
         {:json => {:err => "no such question"}}
-      elsif q["question_type"] == "multiple_choice" then
-        commit_multiple_choice_vote(
-          ensure_bson_id(params[:question_id]),
-          params[:option_tag],
-          vote_item)
       else
-        commit_single_choice_vote(
-          ensure_bson_id(params[:question_id]),
-          params[:option_tag],
-          vote_item)
+        get_table("voting").update(
+          {"_id" => q["_id"],
+            "_kind" => "question"},
+          {"$push" => {"vote_items" => vote_item}})
+        {:json => {:ok => true}}
       end
     end
 
@@ -234,53 +312,15 @@ module HuiPluginPool
       end
     end
 
-    def commit_multiple_choice_vote(question_id, raw_option_tags, vote_item)
-      option_tags = raw_option_tags.split(//).uniq
-
-      os = get_table("voting").find(
-        {"question_id" => question_id,
-          "option_tag" => {"$in" => option_tags}}).to_a
-
-      get_table("voting").update(
-        {"question_id" => question_id,
-          "option_tag" => {"$in" => option_tags}},
-        {"$push" => {"users" => vote_item}},
-        {:multi => true})
-
-      if os.length == option_tags.length then
-        {:json => {:ok => true}}
-      else
-        accepted_options = os.map {|o| o["option_tag"]}
-        ignored_options = option_tags - accepted_options
-        {:json => {:ok => true,
-            :accepted_options => accepted_options.join,
-            :ignored_options => ignored_options.join}}
-      end      
-    end
-
-    def commit_single_choice_vote(question_id, option_tag, vote_item)
-      o = get_table("voting").find_one(
-        {"question_id" => question_id, "option_tag" => option_tag})
-    
-      if o then
-        get_table("voting").update(
-          {"question_id" => question_id,
-            "option_tag" => option_tag},
-          {"$push" => {"users" => vote_item}})
-
-        {:json => {:ok => true}}
-      else
-        {:json => {:err => "no such option: #{option_tag}"}}
-      end
-    end
-
     def pick_question_info(q)
       if q then
         {"_id" => q["_id"].to_s,
           "question_text" => q["question_text"],
           "question_type" => q["question_type"],
           "is_current" => !!q["is_current"],
-          "create_at" => q["create_at"]}
+          "create_at" => q["create_at"],
+          "relative_deadline" => q["relative_deadline"],
+          "vote_items" => q["vote_items"].map {|v| v.except("_id")}}
       else
         {}
       end
@@ -289,281 +329,106 @@ module HuiPluginPool
     def pick_question_info_with_options(q)
       q_info = pick_question_info(q)
 
-      os = get_table("voting").find({"_kind" => "option", "question_id" => q["_id"]}).map do |o|
-        {"option_text" => o["option_text"],
-          "option_tag" => o["option_tag"],
-          "users" => o["users"]}
-      end
+      os = get_table("voting").find(        
+        {"_id" => {"$in" => q["option_ids"]},
+          "_kind" => "option"}).to_a
+      compute_votes(q, os)
 
-      q_info["options"] = os
+      q_info["options"] = os.map do |o|
+        o.except("_id", "_kind", "vote_items", "question_id")
+      end
 
       q_info
     end
-  #   PhysicalLinkDepth = 4
 
-  #   class NoUploadedFileError < RuntimeError; end
-  #   class NoSuchFolderError < RuntimeError; end
+    def compute_votes(q, os)
+      if q["question_type"] == "multiple_choice" then
+        compute_multiple_choice_votes(q, os)
+      else
+        compute_single_choice_votes(q, os)
+      end
+    end
 
-  #   action :admin, :get do |params|
-  #     if params[:current_folder_id] then
-  #       current_folder_id = params[:current_folder_id] 
-  #       current_folder = get_file_by_id(current_folder_id)
-  #       children_ids = current_folder["children_ids"] || []
-  #       children = get_table("files").find({"_id" => {"$in" => children_ids}})
+    def compute_single_choice_votes(q, os)
+      q["unrecognized_vote_items"] = []
+      os.each do |o|
+        o["count"] = 0
+        o["vote_items"] = []
+      end
 
-  #       {:file => "views/admin.slim",
-  #         :locals => {:current_folder_id => current_folder_id,
-  #           :current_folder => current_folder,
-  #           :children => children}}      
-  #     else 
-  #       {:redirect_to => "admin?current_folder_id=#{get_root_folder_id}"}
-  #     end
-  #   end
+      q["vote_items"].each do |v|
+        v["validation"] = validate_vote(q, v)
+        o = os.find {|op| op["option_tag"] == v["option_tag"]}
+        if o then
+          o["vote_items"] << v
+          o["count"] += 1 if v["validation"] == :ok
+        else
+          q["unrecognized_vote_items"] << v
+          v["validation"] = :unrecognized
+        end
+      end
+    end
 
-  #   action :thumbs, :get do |params|
-  #     current_folder_id = params[:current_folder_id] 
-  #     current_folder = get_file_by_id(current_folder_id)
-  #     children_ids = current_folder["children_ids"] || []
-  #     children = get_table("files").find({"_id" => {"$in" => children_ids}}).to_a
+    def compute_multiple_choice_votes(q, os)
+      q["unrecognized_vote_items"] = []
+      os.each do |o|
+        o["count"] = 0
+        o["vote_items"] = []
+      end
 
-  #     {:file => "views/thumbs.slim",
-  #       :locals => {:current_folder_id => current_folder_id,
-  #         :current_folder => current_folder,
-  #         :children => children}}
-  #   end
+      q["vote_items"].each do |v|
+        v["validation"] = validate_vote(q, v)
+        selected_os = os.select {|op| v["option_tag"].include? op["option_tag"]}
+        if selected_os.length > 0 then
+          selected_os.each do |o|
+            o["vote_items"] << v
+            o["count"] += 1 if v["validation"] == :ok
+          end
+        else
+          q["unrecognized_vote_items"] << v
+          v["validation"] = :unrecognized
+        end
+      end
+    end
 
-  #   action :new_folder, :get do |params|
-  #     current_folder_id = params[:current_folder_id] 
-  #     current_folder = get_file_by_id(current_folder_id)
+    def validate_vote(q, v)
+      if not is_valid_vote_on_time(q, v) then
+        :not_on_time
+      elsif not is_valid_vote_on_duplication(q, v) then
+        :duplicated
+      else
+        :ok
+      end
+    end
 
-  #     {:file => "views/new_folder.slim",
-  #       :locals => {:current_folder_id => current_folder_id,
-  #         :current_folder => current_folder}}
-  #   end
+    def is_valid_vote_on_time(q, v)
+      # 不在规定时间内的投票无效
+      if q["started_at"].blank? then
+        false
+      elsif q["relative_deadline"].blank? then
+        v["submitted_at"] > q["started_at"]
+      else
+        v["submitted_at"] > q["started_at"] and
+          v["submitted_at"] < q["started_at"] + q["relative_deadline"].to_i
+      end
+    end
 
-  #   action :create_folder, :post do |params|
-  #     name = if params[:name].blank? then 
-  #              get_default_name
-  #            else 
-  #              params[:name]
-  #            end
-
-  #     current_folder_id = params[:current_folder_id]
-  #     new_folder_id = get_table("files").insert(
-  #       "name" => name,
-  #       "parent_id" => BSON::ObjectId(current_folder_id),
-  #       "is_folder" => true,
-  #       "create_at" => Time.now)
-  #     get_table("files").update(
-  #       {"_id" => BSON::ObjectId(current_folder_id)},
-  #       {"$addToSet" => {"children_ids" => new_folder_id}})
-  #     {:redirect_to => "admin?current_folder_id=#{current_folder_id}"}
-  #   end
-
-  #   action :new_file, :get do |params|
-  #     current_folder_id = params[:current_folder_id] 
-  #     current_folder = get_file_by_id(current_folder_id)
-
-  #     {:file => "views/new_file.slim",
-  #       :locals => {:current_folder_id => current_folder_id,
-  #         :current_folder => current_folder}}
-  #   end
-
-  #   action :create_file, :post do |params|
-  #     begin
-  #       create_file_with_upload(
-  #         params[:current_folder_id], params[:name], params[:file])
-  #       {:redirect_to => "admin?current_folder_id=#{params[:current_folder_id]}"}
-  #     rescue NoUploadedFileError
-  #       {:text => "error: no uploaded file"}
-  #     rescue NoSuchFolderError
-  #       {:text => "error: current folder does not exist"}
-  #     end
-  #   end
-
-  #   action :new_link_file, :get do |params|
-  #     current_folder_id = params[:current_folder_id] 
-  #     current_folder = get_file_by_id(current_folder_id)
-
-  #     {:file => "views/new_link_file.slim",
-  #       :locals => {:current_folder_id => current_folder_id,
-  #         :current_folder => current_folder}}
-  #   end
-
-  #   action :create_link_file, :post do |params|
-  #     current_folder_id = params[:current_folder_id] 
-  #     current_folder = get_file_by_id(current_folder_id)
-  #     link = params[:link]
-  #     if link.blank? then
-  #       {:text => "link should not be empty"}
-  #     else
-  #       name = if params[:name].blank? then
-  #                File.basename(link, ".*")
-  #              else
-  #                params[:name]
-  #              end
-
-  #       insert_file_record(name, link, current_folder_id)
-  #       {:redirect_to => "admin?current_folder_id=#{current_folder_id}"}
-  #     end
-  #   end
-
-  #   action :edit_name, :get do |params|
-  #     current_folder_id = params[:current_folder_id] 
-  #     f_id = params[:f_id]
-  #     f = get_file_by_id(f_id)
-
-  #     {:file => "views/edit_name.slim",
-  #       :locals => {:current_folder_id => current_folder_id,
-  #         :f => f}}
-  #   end
-
-  #   action :update_name, :post do |params|
-  #     name = if params[:new_name].blank? then
-  #              get_default_name
-  #            else 
-  #              params[:new_name]
-  #            end
-
-  #     current_folder_id = params[:current_folder_id]
-  #     f_id = params[:f_id]
-
-  #     get_table("files").update(
-  #       {"_id" => BSON::ObjectId(f_id)},
-  #       {"$set" => {"name" => name}})
-  #     {:redirect_to => "admin?current_folder_id=#{current_folder_id}"}
-  #   end
-
-  #   # 参数：如果f_id对应一个目录，将会给出这个目录的名字、_id和目录下的
-  #   # 所有文件、子目录的id、名字和链接。如果f_id对应一个文件，则会给出
-  #   # 这个文件的id、名字和链接。f_id可以为空，这时会默认为根目录。如果
-  #   # 链接以http://开头，表示是外部链接，否则表示是内部链接。内部链接需
-  #   # 要在前面加上会务平台服务器的地址才能访问。
-  #   action :list, :get, :api => true do |params|
-  #     f_id = if params[:f_id].blank? then
-  #              get_root_folder_id
-  #            else
-  #              params[:f_id]
-  #            end
-  #     f = get_file_by_id(f_id)
-
-  #     if f.nil? then
-  #       {:json => {:error => "wrong f_id"}}
-  #     elsif f["is_folder"] then
-  #       children_ids = f["children_ids"] || []
-  #       children = get_table("files").find({"_id" => {"$in" => children_ids}})
-  #       children_hashes = children.map do |ch|
-  #         ch_data = {:_id => ch["_id"].to_s, :name => ch["name"]}
-  #         if ch["is_folder"] then
-  #           ch_data[:is_folder] = true
-  #         else
-  #           ch_data[:link] = ch["physical_link"] unless ch["is_folder"]
-  #         end
-  #         ch_data
-  #       end
-  #       {:json => {
-  #           :_id => f["_id"].to_s,
-  #           :name => f["name"],
-  #           :is_folder => true,
-  #           :children => children_hashes}}
-  #     else
-  #       {:json => {
-  #           :_id => f["_id"].to_s,
-  #           :name => f["name"],
-  #           :link => f["physical_link"]}}
-  #     end
-  #   end
-
-  #   # 接受四个参数：folder_id、user_id、name和file。其中folder_id是要上
-  #   # 传到的目录的id，name表示在系统中所取的文件名，file则应该是一段
-  #   # multipart的数据，表示文件内容。成功上传时返回{"ok": true}。
-  #   action :upload, :post, :api => true do |params|
-  #     begin
-  #       user = get_friend("userslist").get_user_by_id(params[:user_id])
-  #       username = if user then user["name"] else "" end
-
-  #       create_file_with_upload(
-  #         params[:folder_id], params[:name], params[:file], username)
-  #       {:json => {:ok => true}}
-  #     rescue NoUploadedFileError
-  #       {:json => {:error => "no uploaded file"}}
-  #     rescue NoSuchFolderError
-  #       {:json => {:error => "wrong folder_id"}}
-  #     end      
-  #   end
-
-  #   private
-
-  #   def get_root_folder_id
-  #     root = get_table("files").
-  #       find_one("name" => "/", "parent_id" => nil, "is_folder" => true)
-
-  #     if root then
-  #       root["_id"].to_s
-  #     else
-  #       get_table("files").
-  #         insert("name" => "/", "parent_id" => nil, "is_folder" => true)
-  #       get_root_folder_id
-  #     end
-  #   end
-
-  #   def get_file_by_id(_id)
-  #     begin
-  #       if _id.is_a? String then
-  #         _id = BSON::ObjectId(_id)
-  #       end
-  #       get_table("files").find_one("_id" => _id)
-  #     rescue BSON::InvalidObjectId
-  #       nil
-  #     end
-  #   end
-
-  #   def get_random_relative_physical_link(extname)
-  #     dirs = (0...PhysicalLinkDepth).map { SecureRandom.hex(1) }
-  #     filename = SecureRandom.hex(16) + extname
-  #     ["/system", *dirs, filename].join("/")
-  #   end
-
-  #   def insert_file_record(name, link, current_folder_id, uploader_name="")
-  #     new_file_id = get_table("files").insert(
-  #       "name" => name,
-  #       "physical_link" => link,
-  #       "parent_id" => BSON::ObjectId(current_folder_id),
-  #       "creator" => uploader_name,
-  #       "is_folder" => false,
-  #       "create_at" => Time.now)
-  #     get_table("files").update(
-  #       {"_id" => BSON::ObjectId(current_folder_id)},
-  #       {"$addToSet" => {"children_ids" => new_file_id}})
-  #   end
-
-  #   def get_default_name
-  #     "未命名#{Time.now.getlocal.strftime('%Y%m%d%H%M%S')}"
-  #   end
-
-  #   def create_file_with_upload(folder_id, name, uploaded_file, uploader_name="")
-  #     folder = get_file_by_id(folder_id)
-      
-  #     raise NoUploadedFileError if uploaded_file.nil? 
-  #     raise NoSuchFolderError if folder.nil?
-        
-  #     original_filename = uploaded_file.original_filename
-  #     tempfile_path = uploaded_file.tempfile.path
-  #     final_name = if name.blank? then
-  #                    File.basename(original_filename, ".*")
-  #                  else
-  #                    name
-  #                  end
-  #     extname = File.extname(original_filename)
-
-  #     begin  # caution! this is an "end while" pattern
-  #       physical_link = get_random_relative_physical_link(extname)
-  #       absolute_physical_path = File.join(Rails.root, "public", physical_link)
-  #     end while File.exists?(absolute_physical_path)
-
-  #     FileUtils.mkdir_p(File.dirname(absolute_physical_path))
-  #     FileUtils.mv(tempfile_path, absolute_physical_path)
-  #     insert_file_record(final_name, physical_link, folder_id, uploader_name)
-  #   end
+    def is_valid_vote_on_duplication(q, v)
+      if q["permit_duplicate"] then
+        true
+      else
+        same_user_votes =
+          q["vote_items"].select { |vt| vt["user_id"] == v["user_id"] }
+        same_user_votes_valid_on_time =
+          same_user_votes.select { |vt| is_valid_vote_on_time(q, vt) }
+        if same_user_votes_valid_on_time.empty?
+          true
+        else
+          earliest_id = same_user_votes_valid_on_time.
+            map {|vt| vt["_id"].to_s}.min
+          earliest_id.to_s == v["_id"].to_s
+        end
+      end
+    end
   end
 end

@@ -6,12 +6,14 @@ div
 
 = link_to "编辑文本", "edit_option?q_id=#{q_id}&o_id=#{option['_id']}"
 
-- if option["users"].empty?
+- if option["vote_items"].empty?
   p 暂无人投票
 - else
   p 投票者：
   table
-    - option["users"].each do |u|
+    - option["vote_items"].each do |v|
       tr
-        td= u["name"]
-        td= u["submitted_at"].try(:getlocal)
+        td= v["name"]
+        td= v["submitted_at"].try(:getlocal)
+        td= "（#{human_validation_result[v['validation']]}）"
+

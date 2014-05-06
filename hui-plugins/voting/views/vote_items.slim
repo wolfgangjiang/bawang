@@ -1,0 +1,15 @@
+h2 投票细节
+
+=link_to "返回", "question?id=#{question['_id']}"
+p= question["question_text"]
+
+- if vote_items.empty?
+  p 尚无人投票
+- else
+  table
+    - vote_items.each do |v|
+      tr
+        td= v["option_tag"]
+        td= v["name"]
+        td= v["submitted_at"].getlocal
+        td= "（#{human_validation_result[v['validation']]}）"

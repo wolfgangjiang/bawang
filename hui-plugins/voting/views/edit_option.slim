@@ -8,13 +8,3 @@
   = hidden_field_tag :q_id, q_id
   = hidden_field_tag :o_id, option["_id"]
   = submit_tag "确认"
-
-- if option["users"].empty?
-  p 暂无人投票
-- else
-  p 投票者：
-  table
-    - option["users"].each do |u|
-      tr
-        td= u["name"]
-        td= u["submitted_at"].try(:getlocal)

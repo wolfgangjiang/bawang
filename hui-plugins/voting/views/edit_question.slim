@@ -8,4 +8,10 @@
   = label_tag "question_type", "问题类型："
   = select_tag "question_type", options_for_select(human_question_types.invert, :selected => question["question_type"])
   br
+  = label_tag "relative_deadline", "相对定时时间：（以秒为单位）"
+  = text_field_tag "relative_deadline", question["relative_deadline"]
+  br
+  = label_tag "permit_duplicate", "允许重复投票："
+  = check_box_tag "permit_duplicate", "1", question["permit_duplicate"]
+  br
   = submit_tag "确认"
