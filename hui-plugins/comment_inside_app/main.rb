@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+require 'time'
+
 module HuiPluginPool
   class CommentInsideApp < GenericHuiPlugin
     action :admin, :get do |params|
@@ -14,7 +16,8 @@ module HuiPluginPool
         :text => params[:message],
         :author_name => params[:author_name],
         :active => false,
-        :create_at => Time.now)
+        :create_at => Time.now,
+        :updated_at => Time.now)
       {:redirect_to => "admin"}
     end
 
@@ -22,15 +25,29 @@ module HuiPluginPool
       object_id = BSON::ObjectId(params[:_id]) 
       message = get_table("messages").find_one("_id" => object_id)
       get_table("messages").update({"_id" => object_id},
-        {"$set" => {:active => (not message["active"])}})
+        {"$set" => {
+            :active => (not message["active"]),
+            :updated_at => Time.now}})
       {:redirect_to => "admin"}
     end
 
     action :poll, :get, :api => true do |params|
-      data = get_table("messages").find(:active => true).map do |m|
+      if params[:updated_after] then
+        begin
+          time_limit = Time.parse(params[:updated_after])
+        rescue
+          return {:json => {:err => "cannot parse time string"}}
+        end
+        filter = {:active => true, :updated_at => {"$gt" => time_limit}}
+      else
+        filter = {:active => true}
+      end
+
+      data = get_table("messages").find(filter).map do |m|
         {:text => m["text"],
           :author_name => m["author_name"],
-          :create_at => m["create_at"]}
+          :create_at => m["create_at"],
+          :updated_at => m["updated_at"]}
       end
       {:json => data}
     end

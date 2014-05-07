@@ -180,7 +180,7 @@ module HuiPluginPool
       {:file => "views/unrecognized_vote_items.slim",
         :locals => {:question => q,
           :vote_items => q["unrecognized_vote_items"],
-      :human_validation_result => HumanValidationResult}}
+          :human_validation_result => HumanValidationResult}}
     end
 
     action :new_option, :get do |params|
@@ -245,6 +245,10 @@ module HuiPluginPool
       {:redirect_to => "question?id=#{params[:q_id]}"}      
     end
 
+    # 需要参数：无。返回当前的所有问题，包含每个问题的问题文本、类型、
+    # 是否是当前问题、以及目前投给该问题的所有票数。但不包含问题的选项。
+    # 请用这个api获取所有问题列表的id，然后用问题的id去查询单个问题的具
+    # 体信息。
     action :get_question_list, :get, :api => true do |params|
       qs = get_table("voting").find("_kind" => "question").map do |q|
         pick_question_info(q)
@@ -253,20 +257,28 @@ module HuiPluginPool
       {:json => qs}
     end
 
+    # 需要参数：id，即投票问题的id。返回该问题的所有信息，包括问题文本、
+    # 类型、是否是当前问题、时限、所有选项，以及当前所有投到的票等。
     action :get_question_detail, :get, :api => true do |params|
       q = get_question_by_id(params[:id])
 
       {:json => pick_question_info_with_options(q)}
     end
 
+    # 需要参数：无。返回该问题的所有信息，包括问题文本、类型、是否是当
+    # 前问题、时限、所有选项，以及当前所有投到的票等，与
+    # get_question_detail相同，只不过这个api总是给出当前问题的信息。如
+    # 果投票插件中没有当前问题，返回空对象。
     action :get_current_question_detail, :get, :api => true do |params|
       q = get_table("voting").find_one("is_current" => true)
 
       {:json => pick_question_info_with_options(q)}
     end
 
-    # 对多选的问题，api的形式应该是形如"AC"，一个字符串仅包含选中的选项
-    # 标签。
+    # 需要参数：question_id、option_tag、user_id。其中option_tag应该是
+    # 字符串，对单选的投票问题，option_tag的形式应该是类似"A"，而对多选
+    # 的问题，option_tag的形式应该是形如"AC"，也就是一个字符串仅包含选
+    # 中的选项标签。返回：{"ok":true}
     action :submit_vote, :post, :api => true do |params|
       user = get_friend("userslist").get_user_by_id(params[:user_id])
       username = if user then user["name"] else "<不详>" end
@@ -319,6 +331,7 @@ module HuiPluginPool
           "question_type" => q["question_type"],
           "is_current" => !!q["is_current"],
           "create_at" => q["create_at"],
+          "started_at" => q["started_at"],
           "relative_deadline" => q["relative_deadline"],
           "vote_items" => q["vote_items"].map {|v| v.except("_id")}}
       else
