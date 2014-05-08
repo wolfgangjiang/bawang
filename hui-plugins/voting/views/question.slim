@@ -8,10 +8,10 @@ div
   - else
     span 不许重复投票
     
-  - if question['relative_deadline'].blank? then
+  - if question['time_limit'].blank? then
     span 无限制时间
   - else
-    span= "限制时间#{question['relative_deadline']}秒 "
+    span= "限制时间#{question['time_limit']}秒 "
   span.remaining-time
 
 = link_to "编辑文本", "edit_question?id=#{question['_id']}"

@@ -6,6 +6,7 @@ p
   br
   | （参数：user_id、message，其中user_id用login api获取）
 
+h4= error_message
 = form_tag "post/create" do
   = label_tag :message, "发送管理员消息："
   = text_field_tag :message

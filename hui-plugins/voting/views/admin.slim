@@ -4,6 +4,7 @@ p
   span= link_to "创建题目", "new_question"
   - if Rails.env != "production"
     span= link_to "清空数据", "post/clear", :method => "post"
+  span= link_to "取消当前问题", "post/clear_current", :method => "post"
 
 table
   - questions.each do |q|
@@ -14,6 +15,6 @@ table
         - if q["is_current"] then
           = "是当前问题"
         - else
-          = button_to "设置为当前问题", "post/set_to_current?id=#{q['_id']}"
+          = link_to "设置为当前问题", "post/set_to_current?id=#{q['_id']}", :method => "post"
       td= "[#{human_question_types[q['question_type']]}]"
       td= q["question_text"]

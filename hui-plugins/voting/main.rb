@@ -49,6 +49,15 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
+    action :clear_current, :post do |params|
+      get_table("voting").update(
+        {"_kind" => "question"},
+        {"$set" => {"is_current" => false}},
+        {:multi => true})
+
+      {:redirect_to => "admin"}      
+    end
+
     action :new_question, :get do |params|
       {:file => "views/new_question.slim",
         :locals => {
@@ -68,7 +77,7 @@ module HuiPluginPool
         "question_text" => params[:question_text],
         "question_type" => sanitized_question_type,
         "create_at" => Time.now,
-        "relative_deadline" => params[:relative_deadline],
+        "time_limit" => params[:time_limit],
         "permit_duplicate" => !!params[:permit_duplicate],
         "vote_items" => [],
         "option_ids" => []);
@@ -109,7 +118,7 @@ module HuiPluginPool
           "_kind" => "question"},
         {"$set" => {"question_text" => params[:question_text],
             "question_type" => sanitized_question_type,
-            "relative_deadline" => params[:relative_deadline],
+            "time_limit" => params[:time_limit],
             "permit_duplicate" => !!params[:permit_duplicate]}})
       {:redirect_to => "question?id=#{params[:id]}"}
     end
@@ -133,10 +142,10 @@ module HuiPluginPool
           "尚未开始"
         else
           started_at = "（开始时间 #{q['started_at'].getlocal}）"
-          if q["relative_deadline"].blank? then
+          if q["time_limit"].blank? then
             "正在进行#{started_at}"
           else
-            deadline = q["started_at"] + q["relative_deadline"].to_i
+            deadline = q["started_at"] + q["time_limit"].to_i
             if deadline < Time.now then
               "已经结束#{started_at}"
             else
@@ -325,14 +334,29 @@ module HuiPluginPool
     end
 
     def pick_question_info(q)
-      if q then
+        if q then
+          relative_deadline =
+            if q["started_at"].blank? then
+              nil
+            elsif q["time_limit"].blank? then
+              nil
+            else
+              deadline = q["started_at"] + q["time_limit"].to_i
+              if deadline < Time.now then
+                -1
+              else
+                (deadline - Time.now).to_i
+              end
+            end
+
         {"_id" => q["_id"].to_s,
           "question_text" => q["question_text"],
           "question_type" => q["question_type"],
           "is_current" => !!q["is_current"],
           "create_at" => q["create_at"],
           "started_at" => q["started_at"],
-          "relative_deadline" => q["relative_deadline"],
+          "time_limit" => q["time_limit"],
+          "relative_deadline" => relative_deadline,
           "vote_items" => q["vote_items"].map {|v| v.except("_id")}}
       else
         {}
@@ -418,11 +442,11 @@ module HuiPluginPool
       # 不在规定时间内的投票无效
       if q["started_at"].blank? then
         false
-      elsif q["relative_deadline"].blank? then
+      elsif q["time_limit"].blank? then
         v["submitted_at"] > q["started_at"]
       else
         v["submitted_at"] > q["started_at"] and
-          v["submitted_at"] < q["started_at"] + q["relative_deadline"].to_i
+          v["submitted_at"] < q["started_at"] + q["time_limit"].to_i
       end
     end
 

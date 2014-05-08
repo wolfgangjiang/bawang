@@ -1,19 +1,28 @@
+# -*- coding: utf-8 -*-
 module HuiPluginPool
   class PushInsideApp < GenericHuiPlugin
     action :admin, :get do |params|
+      error_message = read_var("error_message")
+      clear_var("error_message")
+
       messages = get_table("push_messages").find.to_a.reverse
       {:file => "views/admin.slim",
         :locals => {
           :messages => messages,
+          :error_message => error_message,
           :event_id => params[:event_id]}}
     end
 
     action :create, :post do |params|
-      get_table("push_messages").insert(
-        :text => params[:message],
-        :active => false,
-        :create_at => Time.now,
-        :updated_at => Time.now)
+      if params[:message].blank? then
+        write_var("error_message", "不能发送空消息")
+      else
+        get_table("push_messages").insert(
+          :text => params[:message],
+          :active => false,
+          :create_at => Time.now,
+          :updated_at => Time.now)
+      end
       {:redirect_to => "admin"}
     end
 
