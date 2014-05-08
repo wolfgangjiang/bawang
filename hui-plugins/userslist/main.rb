@@ -332,7 +332,7 @@ module HuiPluginPool
     def generic_create(params)
       raise PasswordBlankError if params[:password].blank?
 
-      data = params.slice(params[:password], *HuiMain::UserColumns)
+      data = params.slice("password", *HuiMain::UserColumns)
       get_table("users").insert(data)
     end
 
