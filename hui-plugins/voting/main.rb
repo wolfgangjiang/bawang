@@ -334,20 +334,20 @@ module HuiPluginPool
     end
 
     def pick_question_info(q)
-        if q then
-          relative_deadline =
-            if q["started_at"].blank? then
-              nil
-            elsif q["time_limit"].blank? then
-              nil
+      if q then
+        relative_deadline =
+          if q["started_at"].blank? then
+            nil
+          elsif q["time_limit"].blank? then
+            nil
+          else
+            deadline = q["started_at"] + q["time_limit"].to_i
+            if deadline < Time.now then
+              -1
             else
-              deadline = q["started_at"] + q["time_limit"].to_i
-              if deadline < Time.now then
-                -1
-              else
-                (deadline - Time.now).to_i
-              end
+              (deadline - Time.now).to_i
             end
+          end
 
         {"_id" => q["_id"].to_s,
           "question_text" => q["question_text"],
@@ -364,18 +364,22 @@ module HuiPluginPool
     end
 
     def pick_question_info_with_options(q)
-      q_info = pick_question_info(q)
+      if q then
+        q_info = pick_question_info(q)
 
-      os = get_table("voting").find(        
-        {"_id" => {"$in" => q["option_ids"]},
-          "_kind" => "option"}).to_a
-      compute_votes(q, os)
+        os = get_table("voting").find(        
+          {"_id" => {"$in" => q["option_ids"]},
+            "_kind" => "option"}).to_a
+        compute_votes(q, os)
 
-      q_info["options"] = os.map do |o|
-        o.except("_id", "_kind", "vote_items", "question_id")
+        q_info["options"] = os.map do |o|
+          o.except("_id", "_kind", "vote_items", "question_id")
+        end
+
+        q_info
+      else
+        {}
       end
-
-      q_info
     end
 
     def compute_votes(q, os)
