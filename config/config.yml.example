@@ -1,0 +1,17 @@
+production:
+  admin_user:
+    email: admin@edoctor.cn
+    name: 管理员
+    password: Sh51699890
+
+development:
+  admin_user:
+    email: admin@edoctor.cn
+    name: 管理员
+    password: "123456"
+
+test:
+  admin_user:
+    email: admin@edoctor.cn
+    name: 管理员
+    password: "123456"
