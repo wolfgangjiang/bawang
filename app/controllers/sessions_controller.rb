@@ -14,9 +14,6 @@ class SessionsController < ApplicationController
       return
     end
 
-    p APP_CONFIG
-    p params
-
     if params[:email] == APP_CONFIG["admin_user"]["email"] and
         params[:password] == APP_CONFIG["admin_user"]["password"] then
       session[:current_user_id] = APP_CONFIG["admin_user"]["email"]

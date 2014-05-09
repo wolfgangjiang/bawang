@@ -1,6 +1,4 @@
-= link_to "问题列表", "admin"
-
-p= question["question_text"]
+h3= question["question_text"]
 div
   span= "[#{human_question_types[question['question_type']]}] "
   - if question["permit_duplicate"] then
@@ -14,28 +12,38 @@ div
     span= "限制时间#{question['time_limit']}秒 "
   span.remaining-time
 
-= link_to "编辑文本", "edit_question?id=#{question['_id']}"
-= link_to "添加选项", "new_option?q_id=#{question['_id']}"
-= link_to "投票细节", "vote_items?q_id=#{question['_id']}"
+p
+  = link_to "返回", "admin", :class => "btn btn-default"
+  = link_to "编辑文本", "edit_question?id=#{question['_id']}", :class => "btn btn-info"
+  = link_to "添加选项", "new_option?q_id=#{question['_id']}", :class => "btn btn-info"
+  = link_to "投票细节", "vote_items?q_id=#{question['_id']}", :class => "btn btn-info"
 p 选项：
 
 - if options.empty?
   p 无
 - else
-  table
-    - options.each do |o|
+  table.table.table-responsive.table-hover
+    thead
+      th 标签
+      th 选项文本
+      th 目前票数
+      th
+      th
+    tbody
+      - options.each do |o|
+        tr
+          td= o["option_tag"].to_s + "."
+          td= o["option_text"]
+          td class="option-count-#{o['option_tag']}"
+            = o["count"]
+          td= link_to "查看", "option?q_id=#{question['_id']}&o_id=#{o['_id']}"
+          td= link_to "删除", "post/remove_option?q_id=#{question['_id']}&o_id=#{o['_id']}", :method => :post
       tr
-        td= o["option_tag"].to_s + "."
-        td= o["option_text"]
-        td class="option-count-#{o['option_tag']}"
-          = o["count"]
-        td= link_to "查看", "option?q_id=#{question['_id']}&o_id=#{o['_id']}"
-        td= link_to "删除", "post/remove_option?q_id=#{question['_id']}&o_id=#{o['_id']}", :method => :post
-    tr
-      td
-      td 其它
-      td= question['unrecognized_vote_items'].size
-      td= link_to "查看", "unrecognized_vote_items?q_id=#{question['_id']}"
+        td
+        td 其它
+        td= question['unrecognized_vote_items'].size
+        td= link_to "查看", "unrecognized_vote_items?q_id=#{question['_id']}"
+        td
 
 javascript:
   window.Hui = window.Hui || {};

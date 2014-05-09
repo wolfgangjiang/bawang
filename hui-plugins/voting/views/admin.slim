@@ -1,20 +1,27 @@
 h2 投票管理
 
 p
-  span= link_to "创建题目", "new_question"
+  span= link_to "创建题目", "new_question", :class => "btn btn-info"
+  span= link_to "取消当前问题", "post/clear_current", :method => "post", :class => "btn btn-info"
   - if Rails.env != "production"
-    span= link_to "清空数据", "post/clear", :method => "post"
-  span= link_to "取消当前问题", "post/clear_current", :method => "post"
+    span= link_to "清空数据", "post/clear", :method => "post", :class => "btn btn-danger"
 
-table
-  - questions.each do |q|
-    tr
-      td= link_to "查看", "question?id=#{q['_id']}"
-      td= link_to "删除", "post/remove_question?id=#{q['_id']}", :method => "post"
-      td
-        - if q["is_current"] then
-          = "是当前问题"
-        - else
-          = link_to "设置为当前问题", "post/set_to_current?id=#{q['_id']}", :method => "post"
-      td= "[#{human_question_types[q['question_type']]}]"
-      td= q["question_text"]
+table.table.table-responsive.table-hover
+  thead
+    th 类型
+    th 问题文本
+    th
+    th
+    th
+  tbody
+    - questions.each do |q|
+      tr
+        td= "[#{human_question_types[q['question_type']]}]"
+        td= q["question_text"]
+        td
+          - if q["is_current"] then
+            = "是当前问题"
+          - else
+            = link_to "设置为当前问题", "post/set_to_current?id=#{q['_id']}", :method => "post"
+        td= link_to "查看", "question?id=#{q['_id']}"
+        td= link_to "删除", "post/remove_question?id=#{q['_id']}", :method => "post"

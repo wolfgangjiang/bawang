@@ -1,19 +1,23 @@
-= link_to "返回",  "question?id=#{q_id}"
-
 div
-  span= option["option_tag"].to_s + ". "
-  span= option["option_text"]
+  h3= option["option_tag"].to_s + ". " + option["option_text"]
 
-= link_to "编辑文本", "edit_option?q_id=#{q_id}&o_id=#{option['_id']}"
+= link_to "返回",  "question?id=#{q_id}", :class => "btn btn-default"
+= link_to "编辑文本", "edit_option?q_id=#{q_id}&o_id=#{option['_id']}", :class => "btn btn-info"
+
 
 - if option["vote_items"].empty?
   p 暂无人投票
 - else
   p 投票者：
-  table
-    - option["vote_items"].each do |v|
-      tr
-        td= v["name"]
-        td= v["submitted_at"].try(:getlocal)
-        td= "（#{human_validation_result[v['validation']]}）"
+  table.table.table-responsive.table-hover
+    thead
+      th 名字
+      th 时间
+      th 说明
+    tbody
+      - option["vote_items"].each do |v|
+        tr
+          td= v["name"]
+          td= v["submitted_at"].try(:getlocal)
+          td= "（#{human_validation_result[v['validation']]}）"
 

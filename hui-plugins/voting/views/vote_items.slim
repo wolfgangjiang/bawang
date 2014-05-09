@@ -1,15 +1,21 @@
 h2 投票细节
 
-=link_to "返回", "question?id=#{question['_id']}"
-p= question["question_text"]
+h3= question["question_text"]
+p=link_to "返回", "question?id=#{question['_id']}", :class => "btn btn-default"
 
 - if vote_items.empty?
   p 尚无人投票
 - else
-  table
-    - vote_items.each do |v|
-      tr
-        td= v["option_tag"]
-        td= v["name"]
-        td= v["submitted_at"].getlocal
-        td= "（#{human_validation_result[v['validation']]}）"
+  table.table.table-responsive.table-hover
+    thead
+      th 选项标签
+      th 投票者
+      th 时间
+      th 说明
+    tbody
+      - vote_items.each do |v|
+        tr
+          td= v["option_tag"]
+          td= v["name"]
+          td= v["submitted_at"].getlocal
+          td= "（#{human_validation_result[v['validation']]}）"
