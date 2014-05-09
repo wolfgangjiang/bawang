@@ -7,13 +7,10 @@ module HuiPluginPool
       error_message = read_var("error_message")
       clear_var("error_message")
 
-      sticky_messages = get_table("messages").find("sticky" => true)
-        .sort("updated_at" => -1).to_a
-      other_messages = get_table("messages").find("sticky" => {"$ne" => true})
-        .sort("updated_at" => -1).to_a
+      messages = get_table("messages").find.sort("updated_at" => -1)
       {:file => "views/admin.slim",
         :locals => {
-          :messages => sticky_messages + other_messages,
+          :messages => messages,
           :error_message => error_message,
           :event_id => params[:event_id]}}
     end
@@ -42,13 +39,10 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    action :toggle_sticky, :post do |params|
-      object_id = BSON::ObjectId(params[:id]) 
-      message = get_table("messages").find_one("_id" => object_id)
-      get_table("messages").update({"_id" => object_id},
-        {"$set" => {
-            :sticky => (not message["sticky"]),
-            :updated_at => Time.now}})
+    action :bump, :post do |params|
+      get_table("messages").update(
+        {"_id" => BSON::ObjectId(params[:id])},
+        {"$set" => {:updated_at => Time.now}})
       {:redirect_to => "admin"}
     end
 
@@ -64,7 +58,7 @@ module HuiPluginPool
         time_filter = {}
       end
 
-      appended = get_table("messages").find(time_filter.merge(:active => true, :sticky => {"$ne" => true})).map do |m|
+      appended = get_table("messages").find(time_filter.merge(:active => true)).map do |m|
         {:_id => m["_id"].to_s,
           :text => m["text"],
           :author_name => m["author_name"],
@@ -76,17 +70,9 @@ module HuiPluginPool
           :updated_at => m["updated_at"]}
       end
 
-      sticky = get_table("messages").find(:sticky => true, :active => true).map do |m|
-        {:_id => m["_id"].to_s,
-          :text => m["text"],
-          :author_name => m["author_name"],
-          :updated_at => m["updated_at"]}        
-      end
-
       data = {
         :appended => appended,
         :removed => removed,
-        :sticky => sticky
       }
 
       {:json => data}

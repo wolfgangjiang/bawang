@@ -17,10 +17,9 @@ h4= error_message
 table
   - messages.each do |m|
     tr
-      td= if m["sticky"] then "置顶" else "" end
       td= m["updated_at"].getlocal
       td= m["text"]
       td= m["author_name"]
-      td= if m["active"] then "有效" else "隐藏" end
+      td= if m["active"] then "有效" else "隐藏----" end
       td= link_to "切换状态", "post/toggle_active?id=#{m['_id']}", :method => :post
-      td= link_to "置顶", "post/toggle_sticky?id=#{m['_id']}", :method => :post
+      td= link_to "顶", "post/bump?id=#{m['_id']}", :method => :post
