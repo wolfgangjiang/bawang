@@ -7,10 +7,13 @@ module HuiPluginPool
       error_message = read_var("error_message")
       clear_var("error_message")
 
-      messages = get_table("messages").find.to_a.reverse
+      sticky_messages = get_table("messages").find("sticky" => true)
+        .sort("updated_at" => -1).to_a
+      other_messages = get_table("messages").find("sticky" => {"$ne" => true})
+        .sort("updated_at" => -1).to_a
       {:file => "views/admin.slim",
         :locals => {
-          :messages => messages,
+          :messages => sticky_messages + other_messages,
           :error_message => error_message,
           :event_id => params[:event_id]}}
     end
@@ -29,12 +32,22 @@ module HuiPluginPool
       {:redirect_to => "admin"}
     end
 
-    action :toggle, :post do |params|
-      object_id = BSON::ObjectId(params[:_id]) 
+    action :toggle_active, :post do |params|
+      object_id = BSON::ObjectId(params[:id]) 
       message = get_table("messages").find_one("_id" => object_id)
       get_table("messages").update({"_id" => object_id},
         {"$set" => {
             :active => (not message["active"]),
+            :updated_at => Time.now}})
+      {:redirect_to => "admin"}
+    end
+
+    action :toggle_sticky, :post do |params|
+      object_id = BSON::ObjectId(params[:id]) 
+      message = get_table("messages").find_one("_id" => object_id)
+      get_table("messages").update({"_id" => object_id},
+        {"$set" => {
+            :sticky => (not message["sticky"]),
             :updated_at => Time.now}})
       {:redirect_to => "admin"}
     end
@@ -46,17 +59,36 @@ module HuiPluginPool
         rescue
           return {:json => {:err => "cannot parse time string"}}
         end
-        filter = {:active => true, :updated_at => {"$gt" => time_limit}}
+        time_filter = {:updated_at => {"$gt" => time_limit}}
       else
-        filter = {:active => true}
+        time_filter = {}
       end
 
-      data = get_table("messages").find(filter).map do |m|
-        {:text => m["text"],
+      appended = get_table("messages").find(time_filter.merge(:active => true, :sticky => {"$ne" => true})).map do |m|
+        {:_id => m["_id"].to_s,
+          :text => m["text"],
           :author_name => m["author_name"],
-          :create_at => m["create_at"],
           :updated_at => m["updated_at"]}
       end
+
+      removed = get_table("messages").find(time_filter.merge(:active => false)).map do |m|
+        {:_id => m["_id"].to_s,
+          :updated_at => m["updated_at"]}
+      end
+
+      sticky = get_table("messages").find(:sticky => true, :active => true).map do |m|
+        {:_id => m["_id"].to_s,
+          :text => m["text"],
+          :author_name => m["author_name"],
+          :updated_at => m["updated_at"]}        
+      end
+
+      data = {
+        :appended => appended,
+        :removed => removed,
+        :sticky => sticky
+      }
+
       {:json => data}
     end
 

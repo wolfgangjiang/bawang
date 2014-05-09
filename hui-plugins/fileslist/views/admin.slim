@@ -20,7 +20,9 @@ table.table.table-responsive.table-hover
     th 资源种类
     th 创建日期
     th 创建者
+    th 状态
     th 操作
+    th
   tbody
     - children.each do |f|
       tr
@@ -33,4 +35,6 @@ table.table.table-responsive.table-hover
           td= File.extname(f["physical_link"])
         td= f['create_at'].getlocal
         td= f['creator']
+        td= if f['hidden'] then "隐藏" else "" end
+        td= link_to "切换状态", "post/toggle_hidden?current_folder_id=#{current_folder_id}&f_id=#{f['_id']}", :method => "post"
         td= link_to "改名", "edit_name?current_folder_id=#{current_folder_id}&f_id=#{f['_id']}"

@@ -51,6 +51,16 @@ module HuiPluginPool
           :children => children}}
     end
 
+    action :toggle_hidden, :post do |params|
+      f = get_file_by_id(params[:f_id])
+      if f then
+        get_table("files").update(
+          {"_id" => f["_id"]},
+          {"$set" => {"hidden" => (not f["hidden"])}})
+      end
+      {:redirect_to => "admin?current_folder_id=#{params[:current_folder_id]}"}
+    end
+
     action :new_folder, :get do |params|
       current_folder_id = params[:current_folder_id] 
       current_folder = get_file_by_id(current_folder_id)
@@ -172,7 +182,9 @@ module HuiPluginPool
         children_ids = f["children_ids"] || []
         children = get_table("files").find({"_id" => {"$in" => children_ids}})
         children_hashes = children.map do |ch|
-          ch_data = {:_id => ch["_id"].to_s, :name => ch["name"]}
+          ch_data = {:_id => ch["_id"].to_s,
+            :name => ch["name"],
+            :hidden => !!ch["hidden"]}
           if ch["is_folder"] then
             ch_data[:is_folder] = true
           else
@@ -183,12 +195,14 @@ module HuiPluginPool
         {:json => {
             :_id => f["_id"].to_s,
             :name => f["name"],
+            :hidden => !!f["hidden"],
             :is_folder => true,
             :children => children_hashes}}
       else
         {:json => {
             :_id => f["_id"].to_s,
             :name => f["name"],
+            :hidden => !!f["hidden"],
             :link => f["physical_link"]}}
       end
     end
