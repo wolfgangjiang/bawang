@@ -1,0 +1,12 @@
+h3= "文件名：#{file['name']}"
+
+= form_tag "post/update" do
+  = hidden_field_tag :f_id, file["_id"]
+  = label_tag :limit_times, "允许阅读次数："
+  = text_field_tag :limit_times, limit["limit_times"]
+  br
+  = label_tag :passcode, "特权码："
+  = text_field_tag :passcode, limit["passcode"]
+  br
+  = submit_tag "确认"
+  = link_to "返回", "admin?current_folder_id=#{file['parent_id']}"

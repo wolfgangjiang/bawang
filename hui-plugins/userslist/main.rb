@@ -3,7 +3,7 @@ require 'csv'
 
 module HuiPluginPool
   class Userslist < GenericHuiPlugin
-    class AsFriend < self
+    class AsFriend < GenericHuiPlugin::AsFriend
       def get_user_by_id(_id)
         if _id.is_a? String then
           begin
@@ -13,7 +13,7 @@ module HuiPluginPool
           end
         end
 
-        get_table("users").find_one(:_id => _id)
+        @main_object.get_table("users").find_one(:_id => _id)
       end
     end
 

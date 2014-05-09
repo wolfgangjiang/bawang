@@ -2,6 +2,22 @@
 require 'fileutils'
 module HuiPluginPool
   class Fileslist < GenericHuiPlugin
+    class AsFriend < GenericHuiPlugin::AsFriend
+      def list_folder(folder_id = nil)
+        folder_id ||= @main_object.send(:get_root_folder_id)
+
+        folder = @main_object.send(:get_file_by_id, folder_id)
+        children_ids = folder["children_ids"] || []
+        children = @main_object.get_table("files").find({"_id" => {"$in" => children_ids}})
+
+        {"folder" => folder, "children" => children}
+      end
+
+      def get_file_by_id(f_id)
+        @main_object.send(:get_file_by_id, f_id)
+      end
+    end
+
     PhysicalLinkDepth = 4
 
     class NoUploadedFileError < RuntimeError; end

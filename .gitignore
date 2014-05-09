@@ -19,4 +19,5 @@
 /.ruby-gemset
 /config/db_config.yml
 /config/ldap.yml
+/config/config.yml
 /public/system

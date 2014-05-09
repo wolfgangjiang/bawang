@@ -1,6 +1,12 @@
 class GenericHuiPlugin
   class NoSuchActionError < RuntimeError; end
 
+  class AsFriend
+    def initialize(event_id, plugin_code_name)
+      @main_object = self.class.parent.new(event_id, plugin_code_name)
+    end
+  end
+
   def initialize(event_id, plugin_code_name)
     @plugin_code_name = plugin_code_name
     @event_id = event_id

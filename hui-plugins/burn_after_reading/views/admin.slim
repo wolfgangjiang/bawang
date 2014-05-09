@@ -1,0 +1,31 @@
+p
+  = "当前目录：#{current_folder['name']}"
+  br
+  - if current_folder["parent_id"] then
+    = link_to "<span class=\"glyphicon glyphicon-chevron-left\"> 返回上一级目录</span>".html_safe, "admin?current_folder_id=#{current_folder['parent_id']}"
+
+
+table.table.talbe-responsive.table-hover
+  thead
+    th 类型
+    th 名称
+    th 资源种类
+    th 允许阅读次数
+    th 
+    th
+  tbody
+    - children.each do |f|
+      tr
+        td= if f["is_folder"] then "目录" else "文件" end
+        - if f["is_folder"] then
+          td= link_to f["name"], "admin?current_folder_id=#{f['_id']}"
+          td 目录
+          td
+          td
+          td
+        - else
+          td= link_to f["name"], f["physical_link"]
+          td= File.extname(f["physical_link"])
+          td= f["limit_times"] || "无限"
+          td= link_to "设置限制", "edit?f_id=#{f['_id']}"
+          td= link_to "取消限制", "post/cancel_constraint?f_id=#{f['_id']}", :method => "post"

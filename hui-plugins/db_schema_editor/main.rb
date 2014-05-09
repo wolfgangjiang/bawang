@@ -3,7 +3,7 @@ require 'csv'
 
 module HuiPluginPool
   class DbSchemaEditor < GenericHuiPlugin
-    class AsFriend < self
+    class AsFriend < GenericHuiPlugin::AsFriend
     end
 
     action :admin, :get do |params|

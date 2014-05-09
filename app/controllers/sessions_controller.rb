@@ -14,20 +14,33 @@ class SessionsController < ApplicationController
       return
     end
 
-    ldap_name = params[:email].match(/(.*)@edoctor\.cn/)[1] rescue nil
-    if ldap_name then
-      user_info = LDAP.auth(ldap_name, params[:password])
-      if user_info then
-        session[:current_user_id] = ldap_name
-        session[:current_user_name] = user_info[:display_name]
-        HuiLogger.log(session[:current_user_id], session[:current_user_name],
-          nil, "general_admin", "admin_login", {})
-      else
-        flash[:message] = "login failed"
-      end
+    p APP_CONFIG
+    p params
+
+    if params[:email] == APP_CONFIG["admin_user"]["email"] and
+        params[:password] == APP_CONFIG["admin_user"]["password"] then
+      session[:current_user_id] = APP_CONFIG["admin_user"]["email"]
+      session[:current_user_name] = APP_CONFIG["admin_user"]["name"]
+      HuiLogger.log(session[:current_user_id], session[:current_user_name],
+        nil, "general_admin", "admin_login", {})
     else
       flash[:message] = "login failed"
     end
+
+    # ldap_name = params[:email].match(/(.*)@edoctor\.cn/)[1] rescue nil
+    # if ldap_name then
+    #   user_info = LDAP.auth(ldap_name, params[:password])
+    #   if user_info then
+    #     session[:current_user_id] = ldap_name
+    #     session[:current_user_name] = user_info[:display_name]
+    #     HuiLogger.log(session[:current_user_id], session[:current_user_name],
+    #       nil, "general_admin", "admin_login", {})
+    #   else
+    #     flash[:message] = "login failed"
+    #   end
+    # else
+    #   flash[:message] = "login failed"
+    # end
 
     redirect_to "/"
   end
