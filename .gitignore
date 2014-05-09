@@ -20,4 +20,5 @@
 /config/db_config.yml
 /config/ldap.yml
 /config/config.yml
+/config/unicorn.rb
 /public/system
