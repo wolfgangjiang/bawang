@@ -296,6 +296,7 @@ module HuiPluginPool
 
       FileUtils.mkdir_p(File.dirname(absolute_physical_path))
       FileUtils.mv(tempfile_path, absolute_physical_path)
+      FileUtils.chmod(0644, absolute_physical_path)
       insert_file_record(final_name, physical_link, folder_id, uploader_name)
     end
   end
