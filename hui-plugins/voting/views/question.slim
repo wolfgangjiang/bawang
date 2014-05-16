@@ -29,6 +29,7 @@ p 选项：
       th 目前票数
       th
       th
+      th
     tbody
       - options.each do |o|
         tr
@@ -37,6 +38,7 @@ p 选项：
           td class="option-count-#{o['option_tag']}"
             = o["count"]
           td= link_to "查看", "option?q_id=#{question['_id']}&o_id=#{o['_id']}"
+          td= link_to "投作弊票", "post/submit_cheat_vote?q_id=#{question['_id']}&o_id=#{o['_id']}", :method => :post
           td= link_to "删除", "post/remove_option?q_id=#{question['_id']}&o_id=#{o['_id']}", :method => :post
       tr
         td

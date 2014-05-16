@@ -227,6 +227,18 @@ module HuiPluginPool
           :human_validation_result => HumanValidationResult}}
     end
 
+    action :submit_cheat_vote, :post do |params|
+      option = get_table("voting").find_one(
+        "_id" => ensure_bson_id(params[:o_id]),
+        "_kind" => "option")
+
+      generic_submit_vote(
+        params[:q_id], option["option_tag"],
+        "admin_cheating#{Time.now.strftime('%Y%m%d%H%M%S')}", "管理员作弊票")
+
+      {:redirect_to => "question?id=#{params[:q_id]}"}
+    end
+
     action :edit_option, :get do |params|
       o = get_table("voting").find_one("_id" => BSON::ObjectId(params[:o_id]))
 
@@ -291,25 +303,12 @@ module HuiPluginPool
     action :submit_vote, :post, :api => true do |params|
       user = get_friend("userslist").get_user_by_id(params[:user_id])
       username = if user then user["name"] else "<不详>" end
-      vote_item = {
-        "_id" => BSON::ObjectId.new,
-        "user_id" => params[:user_id],
-        "name" => username,
-        "submitted_at" => Time.now,
-        "option_tag" => params[:option_tag]
-      }
 
-      q = get_question_by_id(params[:question_id])
+      result = generic_submit_vote(
+        params[:question_id], params[:option_tag],
+        params[:user_id], username)
 
-      if q.nil? then
-        {:json => {:err => "no such question"}}
-      else
-        get_table("voting").update(
-          {"_id" => q["_id"],
-            "_kind" => "question"},
-          {"$push" => {"vote_items" => vote_item}})
-        {:json => {:ok => true}}
-      end
+      {:json => result}
     end
 
     private
@@ -470,6 +469,28 @@ module HuiPluginPool
           earliest_id.to_s == v["_id"].to_s
         end
       end
+    end
+
+    def generic_submit_vote(question_id, option_tag, user_id, username)
+      vote_item = {
+        "_id" => BSON::ObjectId.new,
+        "user_id" => user_id.to_s,
+        "name" => username,
+        "submitted_at" => Time.now,
+        "option_tag" => option_tag
+      }
+
+      q = get_question_by_id(question_id)
+
+      if q.nil? then
+        {:err => "no such question"}
+      else
+        get_table("voting").update(
+          {"_id" => q["_id"],
+            "_kind" => "question"},
+          {"$push" => {"vote_items" => vote_item}})
+        {:ok => true}
+      end      
     end
   end
 end
