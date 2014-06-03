@@ -1,0 +1,4 @@
+h2 数据库后台
+
+- schema.each do |cl|
+  p= link_to cl["human_name"], "global_index?class_code_name=#{cl['code_name']}"

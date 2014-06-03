@@ -1,0 +1,18 @@
+h2 数据库后台
+
+span= link_to "返回", "admin"
+span= link_to "新建", "global_new?class_code_name=#{db_class['code_name']}"
+
+h3= db_class["human_name"]
+
+table
+  thead
+    th
+    - db_class["fields"].each do |f|
+      th= f["human_name"]
+  tbody
+    - data.each do |row|
+      tr
+        td= link_to "编辑", "global_edit?id=#{row['_id']}"
+        - db_class["fields"].each do |f|
+          td= field_helper.render_value(f, row[f["code_name"]])

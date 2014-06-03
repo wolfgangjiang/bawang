@@ -1,0 +1,16 @@
+h2 数据库后台
+
+span= link_to "返回", "global_index?class_code_name=#{db_class['code_name']}"
+
+h3= "新建：" + db_class["human_name"]
+
+p （代表字段不可为空）
+
+= form_tag "post/global_create" do
+  div= hidden_field_tag :class_code_name, db_class["code_name"]
+  table
+    - db_class["fields"].each do |f|
+      tr
+        td= label_tag f["code_name"], f["human_name"] + (if f["is_repr"] then "（代表字段）" else "" end)
+        td= field_helper.render_input(f)
+  div= submit_tag "创建"

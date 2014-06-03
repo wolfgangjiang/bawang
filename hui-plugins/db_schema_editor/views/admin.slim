@@ -5,4 +5,32 @@ h2 配置数据库表结构
 
 = link_to "编辑", "edit"
 
+div
+  p
+  | （code_name在这里是“id”一样的地位。在实际存储数据时，数据库中用的字段名
+  | 就是字段的code_name。在api中，json的key名也用这里定义的code_name。请尽
+  | 量使用纯英文定义code_name。如果两个表的code_name相同，或者同一张表的两
+  | 个字段的code_name相同，会使得数据的操作严重地不正常，例如，会使得两个字
+  | 段的数据相互覆盖。同样，code_name一经定义就不可再修改，否则之前存储的数
+  | 据和之后存储的数据会在原始数据库中使用不同的字段名，本质上就成为了两个
+  | 不同的字段。）
+  p
+  | （“代表字段”是字符串，用来在列表中简要地代表一个对象，以便人类阅读时
+  | 一目了然。人的姓名、文章的标题、文件的文件名，都是合适的代表字段。）
+
 div#the_schema_container
+  - schema.each do |cl|
+    div.db_class
+      span.class_code_name= cl["code_name"]
+      span= cl["human_name"]
+      div
+        - cl["fields"].each do |f|
+          div.field
+            span= f["code_name"]
+            span= f["human_name"]
+            span= "[#{human_type_names[f['type']]}]"
+            - if f["type"] == "string" and f["is_repr"] then
+              span 代表字段
+            - elsif ["one-to-one", "one-to-many", "many-to-one", "many-to-many"].include? f["type"] then
+              span= "对应 #{f['reverse_class_human_name']}"
+              span= "的 #{f['reverse_field_human_name']}"
