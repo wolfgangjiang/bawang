@@ -1,5 +1,15 @@
 h2 数据库后台
 
+div#popup.modal.fade
+  = text_field_tag :search, "", :class => "search_text_field"
+  = button_tag "搜索", :class => "search_submit_button", :type => "button"
+  div.candidates
+  
+
+script
+  == "window.Hui = window.Hui || {};"
+  == "window.Hui.db_ajax_data = #{JSON.generate db_ajax_data}";
+
 span= link_to "返回", "global_index?class_code_name=#{db_class['code_name']}"
 
 h3= "编辑：" + db_class["human_name"]
@@ -12,5 +22,6 @@ p （代表字段不可为空）
     - db_class["fields"].each do |f|
       tr
         td= label_tag f["code_name"], f["human_name"] + (if f["is_repr"] then "（代表字段）" else "" end)
-        td= field_helper.render_input_with_value(f, row[f["code_name"]])
+        td== field_helper.render_input_with_value(f, row[f["code_name"]])
   div= submit_tag "确定"
+

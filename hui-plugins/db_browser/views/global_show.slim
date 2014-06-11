@@ -1,0 +1,60 @@
+h2 数据库后台
+
+/ div#popup.modal.fade
+/   = text_field_tag :search, "", :class => "search_text_field"
+/   = button_tag "搜索", :class => "search_submit_button", :type => "button"
+/   div.candidates
+
+.db-edit-simple.hide
+  = form_tag "post/update_simple" do
+    .modal-header 
+      h4 _field_human_name
+    .modal-body
+      = hidden_field_tag :id , row["_id"].to_s
+      = hidden_field_tag :field_code_name, "_field_code_name"
+      div 当前值：_current_value
+      div
+        = label_tag "_field_code_name", "改为："
+        span _input_element
+    .modal-footer
+      = submit_tag "提交"
+
+.db-edit-relational.hide
+  = form_tag "post/update_relational" do
+    .modal-header
+      h4 _field_human_name
+    .modal-body.relation-dialog-body
+      = hidden_field_tag :id , row["_id"].to_s
+      = hidden_field_tag :field_code_name, "_field_code_name"
+      = hidden_field_tag :value, "_current_value", :class => "selected-ids"
+      div.clearfix
+        .col-sm-6
+        .col-sm-6
+          = text_field_tag :search, "", :class => "search-text-field"
+          = button_tag "搜索", :class => "search-submit-button", :type => "button", "field-code-name" => "_field_code_name"
+      div.clearfix
+        .col-sm-6.current-value
+        .col-sm-6.candidates
+    .modal-footer
+      = submit_tag "提交"
+
+.instantiated.modal.fade
+  .modal-dialog
+    .modal-content
+
+script
+  == "window.Hui = window.Hui || {};"
+  == "window.Hui.db_data = #{JSON.generate db_data}";
+
+span= link_to "返回", "global_index?class_code_name=#{db_class['code_name']}"
+
+h3= "查看：" + db_class["human_name"]
+
+p （代表字段不可为空）
+
+table
+  - db_class["fields"].each do |f|
+    tr
+      td= label_tag f["code_name"], f["human_name"] + (if f["is_repr"] then "（代表字段）" else "" end)
+      td== field_helper.render_value(f, row[f["code_name"]])
+      td= link_to "编辑", "javascript:void(0)", :class => "edit-relation", "field-code-name" => f["code_name"]

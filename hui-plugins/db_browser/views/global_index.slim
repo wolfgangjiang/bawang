@@ -13,6 +13,6 @@ table
   tbody
     - data.each do |row|
       tr
-        td= link_to "编辑", "global_edit?id=#{row['_id']}"
+        td= link_to "编辑", "global_show?id=#{row['_id']}"
         - db_class["fields"].each do |f|
           td= field_helper.render_value(f, row[f["code_name"]])
