@@ -1,10 +1,5 @@
 h2 数据库后台
 
-/ div#popup.modal.fade
-/   = text_field_tag :search, "", :class => "search_text_field"
-/   = button_tag "搜索", :class => "search_submit_button", :type => "button"
-/   div.candidates
-
 .db-edit-simple.hide
   = form_tag "post/update_simple" do
     .modal-header 
@@ -56,5 +51,5 @@ table
   - db_class["fields"].each do |f|
     tr
       td= label_tag f["code_name"], f["human_name"] + (if f["is_repr"] then "（代表字段）" else "" end)
-      td== field_helper.render_value(f, row[f["code_name"]])
+      td== field_helper.render_value(f, row)
       td= link_to "编辑", "javascript:void(0)", :class => "edit-relation", "field-code-name" => f["code_name"]

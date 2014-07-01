@@ -11,13 +11,16 @@ module HuiPluginPool
       include ActionView::Helpers::FormOptionsHelper
       include ActionView::Helpers::UrlHelper
 
-      def render_value(field, value)
+      def render_value(field, row)
+        value = row[field["code_name"]]
         case field["type"]
         when "string" then value
         when "number" then value
         when "boolean" then if value then "是" else "否" end
         when "datetime" then value.getlocal.strftime("%Y年%m月%d日 %H:%M")
-        else "查看"
+        when /-to-one/ then row[field["code_name"] + "_repr"]
+        when /-to-many/ then "#{row[field['code_name'] + '_count']}个"
+        else "不支持的类型"
         end
       end
 
@@ -60,7 +63,9 @@ module HuiPluginPool
       schema = get_friend("db_schema_editor").get_schema
       db_class = schema.find {|x| x["code_name"] == class_code_name}
 
-      data = get_table("dynamic_db").find("_kind" => class_code_name)
+      data = get_table("dynamic_db").find("_kind" => class_code_name).to_a
+
+      batch_blow_relations(data, db_class, schema)
 
       {:file => "views/global_index.slim",
         :locals => {:db_class => db_class,
@@ -150,6 +155,8 @@ module HuiPluginPool
           :_id => row["_id"].to_s,
           :row => row
         }
+
+        batch_blow_relations([db_data[:row]], db_class, schema)
 
         {:file => "views/global_show.slim",
           :locals => {:db_class => db_class,
@@ -314,6 +321,47 @@ module HuiPluginPool
         {:id => row["_id"].to_s,
           :cols => fields.map {|f_code_name| row[f_code_name]}}
       end
+    end
+
+    def batch_blow_relations(data, db_class, schema)
+      db_class["fields"].each do |f|
+        if f["type"].include? "-to-one" then
+          related_ids = data.map do |row|
+            ensure_bson_id(row[f["code_name"]][0])
+          end
+          related_rows = get_table("dynamic_db").find(
+            "_id" => {"$in" => related_ids})
+          related_rows_hash = lift_to_hash(related_rows) {|row| row["_id"].to_s}
+          reverse_class_code_name = f["reverse_class"]
+          reverse_class = schema.find do |cl|
+            cl["code_name"] == reverse_class_code_name
+          end
+          reverse_repr_field = reverse_class["fields"].find do |rf|
+            rf["is_repr"]
+          end
+          reverse_repr = reverse_repr_field["code_name"]
+          data.each do |row|
+            reverse_row = related_rows_hash[row[f["code_name"]][0]]
+            row[f["code_name"] + "_repr"] = if reverse_row then
+                                              reverse_row[reverse_repr]
+                                            else
+                                              "（无）"
+                                            end
+          end
+        elsif f["type"].include? "-to-many" then
+          data.each do |row|
+            row[f["code_name"] + "_count"] = row[f["code_name"]].length
+          end
+        end
+      end
+    end
+
+    def lift_to_hash(data, &get_key)
+      hash = {}
+      data.each do |row|
+        hash[get_key.call(row)] = row
+      end
+      hash
     end
   end
 end
